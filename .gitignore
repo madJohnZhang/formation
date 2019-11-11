@@ -1,6 +1,10 @@
 /build
 /devel
 
+*vscode*
+
+.catkin_workspace
+
 *.xml
 *.txt
 *.csv
