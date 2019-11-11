@@ -1,0 +1,8 @@
+/build
+/devel
+
+*.xml
+*.txt
+*.csv
+*.log
+*.jpg
