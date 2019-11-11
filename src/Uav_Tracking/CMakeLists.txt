@@ -36,12 +36,9 @@ set(CMAKE_CXX_FLAGS "-std=c++11 -pthread -O2 ${CMAKE_CXX_FLAGS}")
 add_message_files(
   FILES
 	boundingbox.msg
-<<<<<<< HEAD
-=======
 	posvel.msg
 	controldata.msg
 	packs.msg
->>>>>>> 78d55b433438a291decdd1ac362ac582c5a791ba
 )
 #add_service_files(
 #  FILES
@@ -95,8 +92,6 @@ target_link_libraries(bbox_pub
 	${OpenCV_LIBS}
 )
 
-<<<<<<< HEAD
-=======
 add_executable(communication
 	src/communication.cpp
 )
@@ -105,5 +100,4 @@ target_link_libraries(communication
 	${OpenCV_LIBS}
 	djiosdk-core
 )
->>>>>>> 78d55b433438a291decdd1ac362ac582c5a791ba
 
