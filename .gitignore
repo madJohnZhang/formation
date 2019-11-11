@@ -1,0 +1,16 @@
+/build
+/devel
+/src/Guidance-SDK-ROS
+/src/Onboard-SDK-ROS-3.7
+/src/serial
+
+*vscode*
+
+.catkin_workspace
+
+*.xml
+*.txt
+*.csv
+*.log
+*.jpg
+
