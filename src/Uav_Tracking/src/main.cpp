@@ -35,10 +35,12 @@
 #include "Kalman.h"
 #include "trajectory.h"
 #include "obs.hpp"
-
+#include "uav_tracking/posvel.h"
+#include "uav_tracking/packs.h"
+#include "uav_tracking/controldata.h"
 #include "formation.cpp"
 
-//#define CONTROL
+#define CONTROL
 
 using namespace std;
 using namespace ros;
@@ -46,6 +48,7 @@ using namespace cv;
 using namespace DJI::OSDK;
 
 mutex mtxCam;
+mutex mtxPos;
 Mat frame;
 
 void getFrame(VideoCapture *cap)
@@ -64,7 +67,6 @@ long long getSystemTime()
     gettimeofday(&tv, NULL);
     return tv.tv_sec * 1000000 + tv.tv_usec;
 }
-
 class transmission
 {
     /* data */
@@ -77,7 +79,7 @@ public:
     float yaw;
     transmission()
     {
-        number = 3;
+        number = 2;
         x = 2.2;
         vx = 0.22;
         y = 2.2;
@@ -91,6 +93,7 @@ public:
         y += i;
         vy += i;
         yaw += i;
+        uav_tracking::posvel abc;
     }
 };
 
@@ -118,7 +121,7 @@ void testXBEE()
     din = new uint8_t[sizeof(transmission) * 2];
     dout = new uint8_t[sizeof(transmission)];
     ros::Rate loop(5);
-    int i = 2;
+    int i = 3;
     while (ros::ok())
     {
         //send data
@@ -156,17 +159,13 @@ int main(int argc, char **argv)
     Mat f = (Mat_<float>(4,2) << -2.5, 2.5, 0, 0, 0, 0, 0, 0);
     fs<<"formation"<<f;
     fs.release();*/
+
     init(argc, argv, "main");
     NodeHandle nh;
-    testXBEE();
-    return -1;
+
     Formation formation(1, argv);
-    int calibration = 1;
-    cout << "please input the cali mode: not 0 for calibration completed; 0, do calibration" << endl;
-    cin >> calibration;
-    formation.cali(calibration);
-    cout << "cali complete press any button to continue." << endl;
-    getchar();
+    ros::Subscriber sub = nh.subscribe("posvel_msg", 10, &Formation::packCallback, &formation);
+    ros::Publisher pub = nh.advertise<uav_tracking::controldata>("controlData", 2);
 
     fstream dataSelf("dataSelf.csv", ios::trunc | ios::out);
     fstream dataXb("dataXb.csv", ios::trunc | ios::out);
@@ -248,9 +247,6 @@ int main(int argc, char **argv)
     log_pos << traj_generator.position()[0] << "," << traj_generator.position()[1] << "," << traj_generator.position()[2] << "," << traj_generator.position()[2] << endl;
 
 #ifdef CONTROL
-
-    Vehicle *vehicle = formation.getVehicle();
-    formation.initVehicle();
     //init PID
     controller.init("para.txt");
     log_file << (clock() - timer) / (float)CLOCKS_PER_SEC << " start main tracking loop" << endl;
@@ -262,10 +258,11 @@ int main(int argc, char **argv)
     int posInitCounter = 0;
     timer_ts = getSystemTime();
     timer_fps = clock();
-    ros::Rate loop_rate(10);
+    ros::Rate loop_rate(20);
     //main loop
     while (ros::ok())
     {
+
         loop_rate.sleep();
         ros::spinOnce();
         cap >> frame;
@@ -310,7 +307,7 @@ int main(int argc, char **argv)
 
 //montion estimator
 #ifdef CONTROL
-        if (vehicle->broadcast->getRC().gear == -4545 && q_vx.size() > 7)
+        if (q_vx.size() > 7)
         { //size of control signal buffer
             motion_estimator.update(visual_tracker.position(), q_vx.front() * con_gain, q_vy.front() * con_gain, q_vz.front() * con_gain, q_vyaw.front() * 3.14159 / 180.0 * con_gain, getSystemTime() - timer_ts);
             q_vx.pop();
@@ -330,7 +327,7 @@ int main(int argc, char **argv)
         cout << "here3" << endl;
 
         vector<float> formationInput(2, 0);
-        if (Formation::count <= SERIES + 1)
+        if (Formation::count <= SERIES)
         {
             formation.init();
         }
@@ -341,7 +338,7 @@ int main(int argc, char **argv)
             formationInput[1] = tmp.at<float>(1);
             cout << "formationinput" << formationInput[0] << " " << formationInput[1] << endl;
         }
-        formation.print(&dataSelf, &dataXb);
+        //formation.print(&dataSelf, &dataXb);
         //trajectory generator
         //obstacle input removed temporarily
         //vector<float> obs_input = getAvoidanceInput();
@@ -353,26 +350,23 @@ int main(int argc, char **argv)
 #ifdef CONTROL
         //PID controller and UAV communicator
         Control::CtrlData conInput(Control::STABLE_ENABLE | Control::HORIZONTAL_BODY | Control::HORIZONTAL_VELOCITY | Control::VERTICAL_POSITION, 0, 0, 2, 0);
-        if (vehicle->broadcast->getRC().gear == -4545)
-        {
-            controller.update(traj_generator.position());
-            log_pos << ","
-                    << "control signal"
-                    << "," << controller.vx << "," << controller.vy << "," << controller.vz << "," << controller.vyaw << endl;
-            q_vx.push(controller.vx);
-            q_vy.push(controller.vy);
-            q_vz.push(controller.vz);
-            q_vyaw.push(controller.vyaw);
-            cout << "obs input is: " << controller.vy << endl;
-            conInput = Control::CtrlData(0x4A, controller.vx, controller.vy, controller.vz, controller.vyaw); //controller.vz
-        }
-        else
-        {
-            log_pos << endl;
-            controller.init("para.txt");
-        }
-        vehicle->control->flightCtrl(conInput);
-        cout << "here4" << endl;
+
+        controller.update(traj_generator.position());
+        log_pos << ","
+                << "control signal"
+                << "," << controller.vx << "," << controller.vy << "," << controller.vz << "," << controller.vyaw << endl;
+        q_vx.push(controller.vx);
+        q_vy.push(controller.vy);
+        q_vz.push(controller.vz);
+        q_vyaw.push(controller.vyaw);
+        cout << "obs input is: " << controller.vy << endl;
+        conInput = Control::CtrlData(0x4A, controller.vx, controller.vy, controller.vz, controller.vyaw); //controller.vz
+        uav_tracking::controldata cInput;
+        cInput.vx = conInput.x;
+        cInput.vy = conInput.y;
+        cInput.vz = conInput.z;
+        cInput.vyaw = conInput.yaw;
+        pub.publish(cInput);
 #endif
 #ifndef CONTROL
         log_pos << endl;
@@ -392,9 +386,6 @@ int main(int argc, char **argv)
     }
     //main loop end
 
-#ifdef CONTROL
-    vehicle->releaseCtrlAuthority(10);
-#endif
     /* release data transfer */
     int err_code = stop_transfer();
     RETURN_IF_ERR(err_code);

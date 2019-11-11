@@ -6,6 +6,10 @@
 #include <serial/serial.h>
 #include <vector>
 #include <opencv2/opencv.hpp>
+<<<<<<< HEAD
+=======
+#include <mutex>
+>>>>>>> 4100612f72981e6b9f0e3af05e057dbbc44673cc
 
 #include <djiosdk/dji_vehicle.hpp>
 #include <djiosdk/dji_broadcast.hpp>
@@ -14,6 +18,12 @@
 #include "state.cpp"
 #include "posEstimate.cpp"
 
+<<<<<<< HEAD
+=======
+#include "uav_tracking/posvel.h"
+#include "uav_tracking/packs.h"
+
+>>>>>>> 4100612f72981e6b9f0e3af05e057dbbc44673cc
 #define PI 3.14159265
 #define AUTHORITY "obtainAuthority"
 
@@ -26,6 +36,11 @@ class Formation
 {
 private:
 	FileStorage fs;
+<<<<<<< HEAD
+=======
+	mutex mtxqueue;
+	int queuesize;
+>>>>>>> 4100612f72981e6b9f0e3af05e057dbbc44673cc
 
 	State self;
 	map<int, State> others;
@@ -38,10 +53,16 @@ private:
 	Mat topo;
 	Mat f;
 
+<<<<<<< HEAD
 	LinuxSetup *linuxEnvironment;
 	Vehicle *vehicle;
 
 	posEstimate posE;
+=======
+	posEstimate posE;
+
+	float yaw;
+>>>>>>> 4100612f72981e6b9f0e3af05e057dbbc44673cc
 	double *caliGPS;
 	uint8_t *dataIn;
 	uint8_t *dataOut;
@@ -54,6 +75,7 @@ private:
 public:
 	Formation(int argc, char **argv);
 	~Formation();
+<<<<<<< HEAD
 	void initVehicle();
 	void sendInfo();
 	void getSelf();
@@ -66,22 +88,70 @@ public:
 	void getStates(Mat &target);
 	void print(fstream *self, fstream *xb);
 	Mat getInput();
+=======
+
+	void init();
+
+	void getStates(Mat &target);
+
+	Mat getInput();
+
+	void packCallback(const uav_tracking::packs &input);
+
+>>>>>>> 4100612f72981e6b9f0e3af05e057dbbc44673cc
 	static int count;
 };
 
 int Formation::count = 0;
 
+<<<<<<< HEAD
 Formation::Formation(int argc, char **argv)
 {
 	linuxEnvironment = new LinuxSetup(1, argv);
+=======
+void Formation::packCallback(const uav_tracking::packs &input)
+{
+	State tmp;
+	//mtxqueue.lock();
+	yaw = input.yaw;
+	for (auto i = input.pack.begin(); i != input.pack.end(); i++)
+	{
+		tmp.number = i->number;
+		tmp.yaw = i->yaw;
+		tmp.posVel.at<float>(0) = i->x;
+		tmp.posVel.at<float>(1) = i->vx;
+		tmp.posVel.at<float>(2) = i->y;
+		tmp.posVel.at<float>(3) = i->vy;
+		if (tmp.number == seq)
+		{
+			self = tmp;
+		}
+		else
+		{
+			others[tmp.number] = tmp;
+		}
+	}
+	queuesize++;
+	//mtxqueue.unlock();
+}
+
+Formation::Formation(int argc, char **argv)
+{
+	/*linuxEnvironment = new LinuxSetup(1, argv);
+>>>>>>> 4100612f72981e6b9f0e3af05e057dbbc44673cc
 	vehicle = linuxEnvironment->getVehicle();
 	cout << "here" << endl;
 	if (vehicle == NULL)
 	{
 		std::cout << "Vehicle not initialized, exiting.\n";
 		exit(-1);
+<<<<<<< HEAD
 	}
 
+=======
+	}*/
+	queuesize = 0;
+>>>>>>> 4100612f72981e6b9f0e3af05e057dbbc44673cc
 	fs.open("formation.xml", FileStorage::READ);
 	fs["formationNum"] >> formationNum;
 	fs["seq"] >> seq;
@@ -121,7 +191,10 @@ Formation::Formation(int argc, char **argv)
 
 Formation::~Formation()
 {
+<<<<<<< HEAD
 	delete linuxEnvironment;
+=======
+>>>>>>> 4100612f72981e6b9f0e3af05e057dbbc44673cc
 	delete[] dataOut;
 	delete[] dataIn;
 	delete[] caliGPS;
@@ -129,9 +202,14 @@ Formation::~Formation()
 
 void Formation::init()
 {
+<<<<<<< HEAD
 	getSelf();
 	sendInfo();
 	getInfoFromOthers();
+=======
+	if (queuesize == 0)
+		return;
+>>>>>>> 4100612f72981e6b9f0e3af05e057dbbc44673cc
 	//size of data at one moment
 	vector<double> tmp(3 * NODE, 0.);
 	tmp[3 * (self.number - 1)] = self.posVel.at<double>(0);
@@ -151,12 +229,17 @@ void Formation::init()
 		}
 		count++;
 	}
+<<<<<<< HEAD
+=======
+	queuesize--;
+>>>>>>> 4100612f72981e6b9f0e3af05e057dbbc44673cc
 	if (count == SERIES)
 	{
 		posE.init(tmpInit, SERIES);
 	}
 }
 
+<<<<<<< HEAD
 void Formation::initVehicle()
 {
 	ACK::ErrorCode ack = vehicle->obtainCtrlAuthority(1000);
@@ -257,13 +340,26 @@ Mat Formation::getInput()
 	sendInfo();
 	getInfoFromOthers();
 
+=======
+/*
+	the yaw is in radian
+*/
+
+Mat Formation::getInput()
+{
+>>>>>>> 4100612f72981e6b9f0e3af05e057dbbc44673cc
 	Mat ui = Mat::zeros(2, 1, CV_32FC1);
 	Mat result = Mat::zeros(2, 1, CV_32FC1);
 	Mat target = Mat::zeros(NODE, 3, CV_64FC1);
 
+<<<<<<< HEAD
 	if (others.size() == formationNum - 1)
 	{
 		double yaw = getYaw();
+=======
+	if (queuesize > 0 && others.size() == formationNum - 1)
+	{
+>>>>>>> 4100612f72981e6b9f0e3af05e057dbbc44673cc
 		for (auto info : others)
 		{
 			ui += coefficients * ((self.posVel - f.col(self.number - 1)) - (info.second.posVel - f.col(info.second.number - 1)));
@@ -278,10 +374,15 @@ Mat Formation::getInput()
 		ui += coefficients * (self.posVel - f.col(self.number - 1) - tarPosvel);
 		result.at<float>(0) = ui.at<float>(0) * (float)cos(yaw) + ui.at<float>(1) * (float)sin(yaw);
 		result.at<float>(1) = ui.at<float>(1) * (float)cos(yaw) - ui.at<float>(0) * (float)sin(yaw);
+<<<<<<< HEAD
+=======
+		queuesize--;
+>>>>>>> 4100612f72981e6b9f0e3af05e057dbbc44673cc
 	}
 	return result;
 }
 
+<<<<<<< HEAD
 void Formation::cali(int calibration)
 {
 	if (calibration != 0)
@@ -333,6 +434,8 @@ void Formation::print(fstream *sf, fstream *xb)
 	}
 }
 
+=======
+>>>>>>> 4100612f72981e6b9f0e3af05e057dbbc44673cc
 void Formation::getStates(Mat &target)
 {
 	target.at<double>(0, 0) = self.posVel.at<float>(0);
@@ -347,8 +450,11 @@ void Formation::getStates(Mat &target)
 		i++;
 	}
 }
+<<<<<<< HEAD
 
 Vehicle *Formation::getVehicle()
 {
 	return vehicle;
 }
+=======
+>>>>>>> 4100612f72981e6b9f0e3af05e057dbbc44673cc
