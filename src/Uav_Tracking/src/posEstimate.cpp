@@ -69,7 +69,7 @@ void posEstimate::init(vector<vector<double>> initData, int series)
     {
         for (int j = 0; j < series; j++)
         {
-            piece.data = (uchar *)initData[j].data();
+            piece.data = (uchar *)(initData[j].data());
             avg += gradient(piece, xy);
         }
         avg /= series;

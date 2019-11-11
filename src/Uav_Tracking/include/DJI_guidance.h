@@ -17,7 +17,7 @@
 #define SDK_API extern
 #endif
 
-#define CAMERA_PAIR_NUM 5
+#define CAMERA_PAIR_NUM      5
 
 /**
 * @enum  e_sdk_err_code
