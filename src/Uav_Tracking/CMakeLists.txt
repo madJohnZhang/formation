@@ -32,7 +32,6 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}
 endif()
 set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_FLAGS "-std=c++11 -pthread -O2 ${CMAKE_CXX_FLAGS}")
-
 #AUX_SOURCE_DIRECTORY(src/inc2 SRC)
 add_message_files(
   FILES
@@ -93,4 +92,12 @@ target_link_libraries(bbox_pub
 	${OpenCV_LIBS}
 )
 
+add_executable(communication
+	src/communication.cpp
+)
+target_link_libraries(communication
+	${catkin_LIBRARIES}
+	${OpenCV_LIBS}
+	djiosdk-core
+)
 
