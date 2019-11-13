@@ -110,6 +110,8 @@ communicator::communicator()
     ser.setTimeout(timeout);
     ser.setPort(port);
     ser.setBaudrate(baudrate);
+    ser.setParity(serial::parity_even);
+
     ser.open();
     ser.flushInput();
     ser.flushOutput();
@@ -184,6 +186,7 @@ void communicator::getInfoFromOthers()
         {
             others[tmp.number] = tmp;
         }
+        cout << "the yaw from " << tmp.number << "is " << tmp.yaw << endl;
     }
 }
 
