@@ -165,17 +165,7 @@ int main(int argc, char **argv)
 
     Formation formation(1, argv);
     ros::Subscriber sub = nh.subscribe("posvel_msg", 10, &Formation::packCallback, &formation);
-    ros::Publisher pub = nh.advertise<uav_tracking::controldata>("controlData", 2);
-
-    fstream dataSelf("dataSelf.csv", ios::trunc | ios::out);
-    fstream dataXb("dataXb.csv", ios::trunc | ios::out);
-    dataSelf << "latitude,"
-             << "longitude,"
-             << "yaw" << endl;
-    dataXb << "number,"
-           << "latitude,"
-           << "longitude,"
-           << "yaw" << endl;
+    ros::Publisher pub = nh.advertise<uav_tracking::controldata>("controlData", 1);
 
     Detector target_finder(argc, argv);
     StapleTracker visual_tracker;
@@ -259,6 +249,7 @@ int main(int argc, char **argv)
     timer_ts = getSystemTime();
     timer_fps = clock();
     ros::Rate loop_rate(20);
+    int cooldown = 0; //cooldown for the yaw adjustment
     //main loop
     while (ros::ok())
     {
@@ -327,17 +318,21 @@ int main(int argc, char **argv)
         cout << "here3" << endl;
 
         vector<float> formationInput(2, 0);
-        if (Formation::count <= SERIES)
+        if (cooldown > 40)
         {
-            formation.init();
+            if (Formation::count <= SERIES)
+            {
+                formation.init();
+            }
+            else
+            {
+                Mat tmp = formation.getInput();
+                formationInput[0] = tmp.at<float>(0);
+                formationInput[1] = tmp.at<float>(1);
+                cout << "formationinput" << formationInput[0] << " " << formationInput[1] << endl;
+            }
         }
-        else
-        {
-            Mat tmp = formation.getInput();
-            formationInput[0] = tmp.at<float>(0);
-            formationInput[1] = tmp.at<float>(1);
-            cout << "formationinput" << formationInput[0] << " " << formationInput[1] << endl;
-        }
+        cooldown++;
         //formation.print(&dataSelf, &dataXb);
         //trajectory generator
         //obstacle input removed temporarily
