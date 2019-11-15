@@ -51,6 +51,9 @@ private:
 
     Vehicle *vehicle;
 
+    fstream dataSelf;
+    fstream dataXb;
+
 private:
     const static int sPACKAGESIZE = sizeof(int) + sizeof(float) * 5;
 
@@ -68,6 +71,8 @@ public:
     void getStates(Mat &target);
     void print(fstream *self, fstream *xb);
     Mat getInput();
+
+    void print();
 
     void loop(ros::Publisher &pub);
 
@@ -110,6 +115,8 @@ communicator::communicator()
     ser.setTimeout(timeout);
     ser.setPort(port);
     ser.setBaudrate(baudrate);
+    ser.setParity(serial::parity_even);
+
     ser.open();
     ser.flushInput();
     ser.flushOutput();
@@ -122,6 +129,17 @@ communicator::communicator()
     {
         tmpInit.push_back(vector<double>(3 * NODE, 0));
     }
+
+    //print data
+    dataSelf = fstream("dataSelf.csv", ios::trunc | ios::out);
+    dataXb = fstream("dataXb.csv", ios::trunc | ios::out);
+    dataSelf << "latitude,"
+             << "longitude,"
+             << "yaw" << endl;
+    dataXb << "number,"
+           << "latitude,"
+           << "longitude,"
+           << "yaw" << endl;
 }
 
 communicator::~communicator()
@@ -172,18 +190,18 @@ void communicator::sendInfo()
 
 void communicator::getInfoFromOthers()
 {
-    cout << "bytes read: " << dec << ser.read(dataIn, sPACKAGESIZE * (formationNum - 1));
+    cout << "bytes read: " << ser.read(dataIn, sPACKAGESIZE * (formationNum - 1)) << '\n';
 
     int number = 0;
-    double yaw = 0;
     uav_tracking::posvel tmp;
     for (int i = 0; i < formationNum - 1; i++)
     {
         memcpy(&tmp, dataIn + i * sPACKAGESIZE, sizeof(uav_tracking::posvel));
-        if (tmp.number >= 1 && tmp.number < formationNum)
+        if (tmp.number >= 1 && tmp.number < formationNum && tmp.x != 0 && tmp.y != 0)
         {
             others[tmp.number] = tmp;
         }
+        cout << "the yaw from " << tmp.number << "is " << tmp.yaw << endl;
     }
 }
 
@@ -236,7 +254,6 @@ void communicator::cali(int calibration)
     int flag = 0;
     while (ros::ok() && flag < 100)
     {
-
         ros::spinOnce();
         loop_rate.sleep();
 
@@ -270,6 +287,16 @@ void communicator::loop(ros::Publisher &pub)
     pub.publish(tmp);
 }
 
+void communicator::print()
+{
+    dataSelf << self.x << "," << self.vx << "," << self.y << "," << self.vy << "," << self.yaw << endl;
+    for (auto i : others)
+    {
+        dataXb << i.second.number << "," << i.second.x << "," << i.second.vx << "," << i.second.y << "," << i.second.vy << "," << i.second.yaw << endl;
+        cout << "xbee data is: " << i.second.number << "," << i.second.x << "," << i.second.vx << "," << i.second.y << "," << i.second.vy << "," << i.second.yaw << endl;
+    }
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "com");
@@ -284,15 +311,22 @@ int main(int argc, char **argv)
     getchar();
 
     ros::Publisher pub = nh.advertise<uav_tracking::packs>("posvel_msg", 2);
-    ros::Subscriber sub = nh.subscribe("controlData", 2, &communicator::controlCallback, &com);
-    ros::Rate loop_rate(5);
+    ros::Subscriber sub = nh.subscribe("controlData", 1, &communicator::controlCallback, &com);
+    ros::Rate loop_rate(15);
+    int i = 0;
     while (ros::ok())
     {
         loop_rate.sleep();
-        com.getSelf();
-        com.sendInfo();
-        com.getInfoFromOthers();
-        com.loop(pub);
+        if (i == 0)
+        {
+            com.getSelf();
+            com.sendInfo();
+            com.getInfoFromOthers();
+            com.loop(pub);
+            com.print();
+        }
+        i++;
+        i %= 3;
         ros::spinOnce();
     }
     return 0;

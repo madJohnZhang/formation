@@ -21,7 +21,7 @@
 #define PI 3.14159265
 #define AUTHORITY "obtainAuthority"
 
-#define SERIES 20
+#define SERIES 5
 
 using namespace std;
 using namespace cv;
@@ -34,7 +34,7 @@ private:
 	int queuesize;
 
 	State self;
-	map<int, State> others;
+	unordered_map<int, State> others;
 	serial::Serial ser;
 
 	int formationNum;
@@ -95,7 +95,10 @@ void Formation::packCallback(const uav_tracking::packs &input)
 			others[tmp.number] = tmp;
 		}
 	}
-	queuesize++;
+	if (others.size() == formationNum - 1)
+	{
+		queuesize++;
+	}
 	//mtxqueue.unlock();
 }
 
