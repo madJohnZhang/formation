@@ -93,7 +93,6 @@ public:
         y += i;
         vy += i;
         yaw += i;
-        uav_tracking::posvel abc;
     }
 };
 
