@@ -1,5 +1,4 @@
-#pragma once
-#include <vector>
+#pragma once #include < vector >
 #include <iostream>
 #include <fstream>
 #include <assert.h>
