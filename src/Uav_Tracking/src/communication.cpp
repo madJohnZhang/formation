@@ -33,6 +33,8 @@ private:
     int formationNum;
     int seq;
 
+    bool startControl;
+
     uav_tracking::posvel self;
     map<int, uav_tracking::posvel> others;
 
@@ -69,7 +71,6 @@ public:
 
     void cali(int calibration);
     void getStates(Mat &target);
-    void print(fstream *self, fstream *xb);
     Mat getInput();
 
     void print();
@@ -77,7 +78,7 @@ public:
     void loop(ros::Publisher &pub);
 
     void controlCallback(const uav_tracking::controldata &input);
-
+    float bound(const float &input);
     static int count;
 };
 
@@ -96,7 +97,7 @@ communicator::communicator()
         std::cout << "Vehicle not initialized, exiting.\n";
         exit(-1);
     }
-
+    startControl = false;
     fs.open("formation.xml", FileStorage::READ);
     fs["formationNum"] >> formationNum;
     fs["seq"] >> seq;
@@ -223,12 +224,31 @@ void communicator::print(fstream *sf, fstream *xb)
 		*xb << fixed << setprecision(14) << info.first << "," << info.second.posVel.at<float>(0) << "," << info.second.posVel.at<float>(2) << "," << info.second.yaw << endl;
 	}
 }*/
-
+float communicator::bound(const float &input)
+{
+    if (input > 1)
+    {
+        return 1;
+    }
+    else if (input < -1)
+    {
+        return -1;
+    }
+    else
+    {
+        return input;
+    }
+}
 void communicator::controlCallback(const uav_tracking::controldata &input)
 {
+    if (startControl == false)
+    {
+        initVehicle();
+        startControl = true;
+    }
     if (vehicle->broadcast->getRC().gear == -4545)
     {
-        Control::CtrlData cd(0x4A, input.vx, input.vy, input.vz, input.vyaw);
+        Control::CtrlData cd(0x4A, bound(input.vx), bound(input.vy), input.vz, input.vyaw);
         vehicle->control->flightCtrl(cd);
     }
 }

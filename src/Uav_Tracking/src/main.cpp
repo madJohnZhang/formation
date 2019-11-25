@@ -317,7 +317,7 @@ int main(int argc, char **argv)
         cout << "here3" << endl;
 
         vector<float> formationInput(2, 0);
-        if (cooldown > 40)
+        if (cooldown > 50)
         {
             if (Formation::count <= SERIES)
             {
