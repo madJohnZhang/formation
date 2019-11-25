@@ -153,12 +153,12 @@ communicator::~communicator()
 
 void communicator::initVehicle()
 {
-    /*ACK::ErrorCode ack = vehicle->obtainCtrlAuthority(1000);
-	if (ACK::getError(ack))
-	{
-		ACK::getErrorCodeMessage(ack, AUTHORITY);
-		exit(-1);
-	}*/
+    ACK::ErrorCode ack = vehicle->obtainCtrlAuthority(1000);
+    if (ACK::getError(ack))
+    {
+        ACK::getErrorCodeMessage(ack, AUTHORITY);
+        exit(-1);
+    }
     cout << "authority init complete" << endl;
 }
 
@@ -197,11 +197,11 @@ void communicator::getInfoFromOthers()
     for (int i = 0; i < formationNum - 1; i++)
     {
         memcpy(&tmp, dataIn + i * sPACKAGESIZE, sizeof(uav_tracking::posvel));
-        if (tmp.number >= 1 && tmp.number < formationNum && tmp.x != 0 && tmp.y != 0)
+        if (tmp.number >= 1 && tmp.number <= formationNum && tmp.x != 0 && tmp.y != 0)
         {
             others[tmp.number] = tmp;
         }
-        cout << "the yaw from " << tmp.number << "is " << tmp.yaw << endl;
+        cout << "the yaw from " << tmp.number << "is " << tmp.x << " " << tmp.y << " " << tmp.yaw << endl;
     }
 }
 
