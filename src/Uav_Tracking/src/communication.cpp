@@ -78,7 +78,7 @@ public:
     void loop(ros::Publisher &pub);
 
     void controlCallback(const uav_tracking::controldata &input);
-    float bound(float &input);
+    float bound(const float &input);
     static int count;
 };
 
@@ -224,7 +224,7 @@ void communicator::print(fstream *sf, fstream *xb)
 		*xb << fixed << setprecision(14) << info.first << "," << info.second.posVel.at<float>(0) << "," << info.second.posVel.at<float>(2) << "," << info.second.yaw << endl;
 	}
 }*/
-float communicator::bound(float &input)
+float communicator::bound(const float &input)
 {
     if (input > 1)
     {
