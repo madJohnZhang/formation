@@ -106,10 +106,6 @@ void Formation::packCallback(const uav_tracking::packs &input)
 
 Formation::Formation(int argc, char **argv)
 {
-<<<<<<< HEAD
-=======
-
->>>>>>> 22fc4094044943dc0eeb8a053e992689375b97a8
 	queuesize = 0;
 	fs.open("formation.xml", FileStorage::READ);
 	fs["formationNum"] >> formationNum;
