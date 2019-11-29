@@ -104,14 +104,6 @@ void Formation::packCallback(const uav_tracking::packs &input)
 
 Formation::Formation(int argc, char **argv)
 {
-	/*linuxEnvironment = new LinuxSetup(1, argv);
-	vehicle = linuxEnvironment->getVehicle();
-	cout << "here" << endl;
-	if (vehicle == NULL)
-	{
-		std::cout << "Vehicle not initialized, exiting.\n";
-		exit(-1);
-	}*/
 	queuesize = 0;
 	fs.open("formation.xml", FileStorage::READ);
 	fs["formationNum"] >> formationNum;
