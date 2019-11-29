@@ -39,6 +39,7 @@ private:
 
 	int formationNum;
 	int seq;
+	int8_t synch;
 
 	Mat coefficients;
 	Mat topo;
@@ -89,6 +90,7 @@ void Formation::packCallback(const uav_tracking::packs &input)
 		if (tmp.number == seq)
 		{
 			self = tmp;
+			synch = i->synch;
 		}
 		else
 		{
@@ -104,6 +106,10 @@ void Formation::packCallback(const uav_tracking::packs &input)
 
 Formation::Formation(int argc, char **argv)
 {
+<<<<<<< HEAD
+=======
+
+>>>>>>> 22fc4094044943dc0eeb8a053e992689375b97a8
 	queuesize = 0;
 	fs.open("formation.xml", FileStorage::READ);
 	fs["formationNum"] >> formationNum;
@@ -152,6 +158,16 @@ Formation::~Formation()
 void Formation::init()
 {
 	if (queuesize == 0)
+		return;
+	//judge if all the agents in the network ready
+	int count = 0;
+	int8_t tmpSynch = synch;
+	while (tmpSynch != 0)
+	{
+		tmpSynch &= tmpSynch - 1;
+		count++;
+	}
+	if (count < formationNum)
 		return;
 	//size of data at one moment
 	vector<double> tmp(3 * NODE, 0.);

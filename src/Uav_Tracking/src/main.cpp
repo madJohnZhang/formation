@@ -21,6 +21,7 @@
 
 #include <djiosdk/dji_broadcast.hpp>
 
+#include <std_msgs/Int8.h>
 #include <geometry_msgs/TransformStamped.h> //IMU
 #include <geometry_msgs/Vector3Stamped.h>   //velocity
 #include <sensor_msgs/LaserScan.h>          //obstacle distance & ultrasonic
@@ -165,7 +166,7 @@ int main(int argc, char **argv)
     Formation formation(1, argv);
     ros::Subscriber sub = nh.subscribe("posvel_msg", 10, &Formation::packCallback, &formation);
     ros::Publisher pub = nh.advertise<uav_tracking::controldata>("controlData", 1);
-
+    ros::Publisher ready = nh.advertise<std_msgs::Int8>("readyTogo", 2);
     Detector target_finder(argc, argv);
     StapleTracker visual_tracker;
     Kalman motion_estimator;
@@ -249,6 +250,11 @@ int main(int argc, char **argv)
     timer_fps = clock();
     ros::Rate loop_rate(20);
     int cooldown = 0; //cooldown for the yaw adjustment
+
+    std_msgs::Int8 goFly;
+    goFly.data = 1;
+    ready.publish(goFly);
+    ready.publish(goFly);
     //main loop
     while (ros::ok())
     {
@@ -317,21 +323,17 @@ int main(int argc, char **argv)
         cout << "here3" << endl;
 
         vector<float> formationInput(2, 0);
-        if (cooldown > 50)
+        if (Formation::count <= SERIES)
         {
-            if (Formation::count <= SERIES)
-            {
-                formation.init();
-            }
-            else
-            {
-                Mat tmp = formation.getInput();
-                formationInput[0] = tmp.at<float>(0);
-                formationInput[1] = tmp.at<float>(1);
-                cout << "formationinput" << formationInput[0] << " " << formationInput[1] << endl;
-            }
+            formation.init();
         }
-        cooldown++;
+        else
+        {
+            Mat tmp = formation.getInput();
+            formationInput[0] = tmp.at<float>(0);
+            formationInput[1] = tmp.at<float>(1);
+            cout << "formationinput" << formationInput[0] << " " << formationInput[1] << endl;
+        }
         //formation.print(&dataSelf, &dataXb);
         //trajectory generator
         //obstacle input removed temporarily

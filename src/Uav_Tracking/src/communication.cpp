@@ -7,6 +7,7 @@
 #include <serial/serial.h>
 #include <djiosdk/dji_vehicle.hpp>
 #include <djiosdk/dji_broadcast.hpp>
+#include <std_msgs/Int8.h>
 
 #include "dji_linux_helpers.cpp"
 
@@ -57,7 +58,7 @@ private:
     fstream dataXb;
 
 private:
-    const static int sPACKAGESIZE = sizeof(int) + sizeof(float) * 5;
+    const static int sPACKAGESIZE = sizeof(uav_tracking::posvel);
 
 public:
     communicator();
@@ -78,6 +79,7 @@ public:
     void loop(ros::Publisher &pub);
 
     void controlCallback(const uav_tracking::controldata &input);
+    void readyCalback(const std_msgs::Int8 &ready);
     float bound(const float &input);
     static int count;
 };
@@ -97,6 +99,7 @@ communicator::communicator()
         std::cout << "Vehicle not initialized, exiting.\n";
         exit(-1);
     }
+    self.synch = 0;
     startControl = false;
     fs.open("formation.xml", FileStorage::READ);
     fs["formationNum"] >> formationNum;
@@ -201,6 +204,7 @@ void communicator::getInfoFromOthers()
         if (tmp.number >= 1 && tmp.number <= formationNum && tmp.x != 0 && tmp.y != 0)
         {
             others[tmp.number] = tmp;
+            self.synch |= tmp.synch;
         }
         cout << "the yaw from " << tmp.number << "is " << tmp.x << " " << tmp.y << " " << tmp.yaw << endl;
     }
@@ -250,6 +254,16 @@ void communicator::controlCallback(const uav_tracking::controldata &input)
     {
         Control::CtrlData cd(0x4A, bound(input.vx), bound(input.vy), input.vz, input.vyaw);
         vehicle->control->flightCtrl(cd);
+    }
+}
+
+void communicator::readyCalback(const std_msgs::Int8 &ready)
+{
+    if (ready.data == 1)
+    {
+        int8_t tmp = 1;
+        tmp << seq;
+        self.synch |= tmp;
     }
 }
 
@@ -332,6 +346,7 @@ int main(int argc, char **argv)
 
     ros::Publisher pub = nh.advertise<uav_tracking::packs>("posvel_msg", 2);
     ros::Subscriber sub = nh.subscribe("controlData", 1, &communicator::controlCallback, &com);
+    ros::Subscriber subGo = nh.subscribe("readyTogo", 2, &communicator::readyCalback, &com);
     ros::Rate loop_rate(15);
     int i = 0;
     while (ros::ok())
