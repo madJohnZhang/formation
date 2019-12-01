@@ -370,7 +370,7 @@ int main(int argc, char **argv)
         if (!(iterate_times % 50))
         { //image output rate
             vector<int> param = vector<int>(2);
-            sprintf(name, "./video/%03d.jpg", iterate_times);
+            sprintf(name, "/home/sustec/tracking/images/%03d.jpg", iterate_times);
             param[0] = CV_IMWRITE_JPEG_QUALITY;
             param[1] = 95;
             imwrite(name, image, param);
