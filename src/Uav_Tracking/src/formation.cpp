@@ -106,7 +106,6 @@ void Formation::packCallback(const uav_tracking::packs &input)
 
 Formation::Formation(int argc, char **argv)
 {
-
 	queuesize = 0;
 	fs.open("formation.xml", FileStorage::READ);
 	fs["formationNum"] >> formationNum;
@@ -155,7 +154,9 @@ Formation::~Formation()
 void Formation::init()
 {
 	if (queuesize == 0)
+	{
 		return;
+	}
 	//judge if all the agents in the network ready
 	int count = 0;
 	int8_t tmpSynch = synch;
@@ -165,7 +166,10 @@ void Formation::init()
 		count++;
 	}
 	if (count < formationNum)
+	{
+		cout << "not enough ready agents" << endl;
 		return;
+	}
 	//size of data at one moment
 	vector<double> tmp(3 * NODE, 0.);
 	tmp[3 * (self.number - 1)] = self.posVel.at<double>(0);
