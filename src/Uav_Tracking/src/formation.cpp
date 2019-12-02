@@ -116,18 +116,6 @@ Formation::Formation(int argc, char **argv)
 	topo.convertTo(topo, CV_32FC1);
 	coefficients.convertTo(coefficients, CV_32FC1);
 	f.convertTo(f, CV_32FC1);
-	string port;
-	int baudrate;
-	serial::Timeout timeout(100);
-	fs["port"] >> port;
-	fs["baudrate"] >> baudrate;
-	cout << "and here" << endl;
-	ser.setTimeout(timeout);
-	ser.setPort(port);
-	ser.setBaudrate(baudrate);
-	ser.open();
-	ser.flushInput();
-	ser.flushOutput();
 	fs.release();
 
 	dataOut = new uint8_t[sPACKAGESIZE];
@@ -158,14 +146,14 @@ void Formation::init()
 		return;
 	}
 	//judge if all the agents in the network ready
-	int count = 0;
+	int countAgent = 0;
 	int8_t tmpSynch = synch;
 	while (tmpSynch != 0)
 	{
 		tmpSynch &= tmpSynch - 1;
-		count++;
+		countAgent++;
 	}
-	if (count < formationNum)
+	if (countAgent < formationNum)
 	{
 		cout << "not enough ready agents" << endl;
 		return;
@@ -186,9 +174,11 @@ void Formation::init()
 		if (count < tmpInit.size())
 		{
 			tmpInit[count].assign(tmp.begin(), tmp.end());
+			cout << "init ready to" << endl;
 		}
 		cout << "init ready to" << endl;
 		count++;
+		cout << "count is " << count << "------------------------" << endl;
 	}
 	queuesize--;
 	if (count == SERIES)
