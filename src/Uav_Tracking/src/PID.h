@@ -75,7 +75,6 @@ public:
 		}
 		vx = Kp[0] * current[0] + Ki[0] * sum[0] + Kd[0] * diff[0];
 		vy = Kp[1] * current[1] + Ki[1] * sum[1] + Kd[1] * diff[1];
-		cout << "controller.update vy " << vy << endl;
 		vz = Kp[2] * current[2] + Ki[2] * sum[2] + Kd[2] * diff[2];
 		vyaw = Kp[3] * current[3] + Ki[3] * sum[3] + Kd[3] * diff[3];
 	}
