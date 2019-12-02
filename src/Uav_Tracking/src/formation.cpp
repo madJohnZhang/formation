@@ -187,6 +187,7 @@ void Formation::init()
 		{
 			tmpInit[count].assign(tmp.begin(), tmp.end());
 		}
+		cout << "init ready to" << endl;
 		count++;
 	}
 	queuesize--;

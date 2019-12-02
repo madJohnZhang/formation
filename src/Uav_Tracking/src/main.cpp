@@ -262,9 +262,7 @@ int main(int argc, char **argv)
         loop_rate.sleep();
         ros::spinOnce();
         cap >> frame;
-        cout << "here1" << endl;
         frame.copyTo(image);
-        cout << "copy complete" << endl;
         try
         {
             target_lost = !visual_tracker.track(image);
@@ -292,7 +290,6 @@ int main(int argc, char **argv)
             motion_estimator.init(visual_tracker.position(),true);
         }
 */
-        cout << "here2" << endl;
         if (!(iterate_times % 8) /*&&!target_lost*/) //templates update frequency
         {
             visual_tracker.update(image);
@@ -320,7 +317,6 @@ int main(int argc, char **argv)
                 << "motion estimate"
                 << "," << motion_estimator.position()[0] << "," << motion_estimator.position()[1] << "," << motion_estimator.position()[2] << ",";
         timer_ts = getSystemTime();
-        cout << "here3" << endl;
 
         vector<float> formationInput(2, 0);
         if (Formation::count <= SERIES)
@@ -355,7 +351,7 @@ int main(int argc, char **argv)
         q_vy.push(controller.vy);
         q_vz.push(controller.vz);
         q_vyaw.push(controller.vyaw);
-        cout << "obs input is: " << controller.vy << endl;
+        //cout << "obs input is: " << controller.vy << endl;
         conInput = Control::CtrlData(0x4A, controller.vx, controller.vy, controller.vz, controller.vyaw); //controller.vz
         uav_tracking::controldata cInput;
         cInput.vx = conInput.x;
