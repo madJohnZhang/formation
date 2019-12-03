@@ -253,8 +253,7 @@ int main(int argc, char **argv)
 
     std_msgs::Int8 goFly;
     goFly.data = 1;
-    ready.publish(goFly);
-    ready.publish(goFly);
+
     //main loop
     while (ros::ok())
     {
@@ -263,6 +262,12 @@ int main(int argc, char **argv)
         ros::spinOnce();
         cap >> frame;
         frame.copyTo(image);
+
+        if (cooldown++ == 50)
+        {
+            ready.publish(goFly);
+            ready.publish(goFly);
+        }
         try
         {
             target_lost = !visual_tracker.track(image);
