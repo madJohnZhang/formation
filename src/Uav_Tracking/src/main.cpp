@@ -159,7 +159,6 @@ int main(int argc, char **argv)
     Mat f = (Mat_<float>(4,2) << -2.5, 2.5, 0, 0, 0, 0, 0, 0);
     fs<<"formation"<<f;
     fs.release();*/
-
     init(argc, argv, "main");
     NodeHandle nh;
 
@@ -295,7 +294,7 @@ int main(int argc, char **argv)
             motion_estimator.init(visual_tracker.position(),true);
         }
 */
-        if (!(iterate_times % 8) /*&&!target_lost*/) //templates update frequency
+        if (!(iterate_times % 5) /*&&!target_lost*/) //templates update frequency
         {
             visual_tracker.update(image);
         }
@@ -335,7 +334,6 @@ int main(int argc, char **argv)
             formationInput[1] = tmp.at<float>(1);
             cout << "formationinput" << formationInput[0] << " " << formationInput[1] << endl;
         }
-        //formation.print(&dataSelf, &dataXb);
         //trajectory generator
         //obstacle input removed temporarily
         //vector<float> obs_input = getAvoidanceInput();

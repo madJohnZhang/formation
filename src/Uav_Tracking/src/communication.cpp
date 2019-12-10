@@ -247,13 +247,17 @@ void communicator::controlCallback(const uav_tracking::controldata &input)
 {
     if (startControl == false)
     {
-        //initVehicle();
+        initVehicle();
         startControl = true;
     }
     if (vehicle->broadcast->getRC().gear == -4545)
     {
         Control::CtrlData cd(0x4A, bound(input.vx), bound(input.vy), input.vz, input.vyaw);
         vehicle->control->flightCtrl(cd);
+    }
+    else
+    {
+        cout << "gear need to pull" << endl;
     }
 }
 
