@@ -142,23 +142,37 @@ void testXBEE()
     dataXb2.close();
     exit(0);
 }
+Point origin;
+Rect choose;
+bool select_flag = false, standby = true;
+void mouseCallback(int event, int x, int y, int flags, void *userdata)
+{
+    if (!standby)
+    {
+        return;
+    }
+    if (select_flag)
+    {
+        choose.x = MIN(origin.x, x);
+        choose.y = MIN(origin.y, y);
+        choose.width = abs(origin.x - x);
+        choose.height = abs(origin.y - y);
+        choose &= Rect(0, 0, 640, 480);
+    }
+    if (event == CV_EVENT_LBUTTONDOWN)
+    {
+        select_flag = true;
+        origin = Point(x, y);
+        cout << x << y << endl;
+    }
+    else if (event == CV_EVENT_LBUTTONUP)
+    {
+        standby = false;
+    }
+}
 
 int main(int argc, char **argv)
 {
-
-    /*FileStorage fs("formation.xml",FileStorage::WRITE);
-    fs<<"formationNum"<<3;
-    fs<<"seq"<<1;
-    string port("/dev/ttyUSB1");
-    fs<<"port"<<port;
-    fs<<"baudrate"<<9600;
-    Mat topo = (Mat_<int>(3,3)<< 1,1,1,0,1,0,1,0,0,0,0,1);
-    Mat coefficients = (Mat_<float>(2,4)<<1,1,0,0,0,0,1,1);
-    fs<<"topology"<<topo;
-    fs<<"coefficients"<<coefficients;
-    Mat f = (Mat_<float>(4,2) << -2.5, 2.5, 0, 0, 0, 0, 0, 0);
-    fs<<"formation"<<f;
-    fs.release();*/
     init(argc, argv, "main");
     NodeHandle nh;
 
@@ -186,6 +200,7 @@ int main(int argc, char **argv)
     vector<int> bounding_box(4);
     Mat image;
     VideoCapture cap;
+    VideoWriter vwriter("/home/sustec/tracking/images/record.avi", -1, 20, Size(640, 480));
     //Mat frame;
     cap.open(0);
     if (!cap.isOpened())
@@ -197,24 +212,28 @@ int main(int argc, char **argv)
     {
         log_file << (clock() - timer) / (float)CLOCKS_PER_SEC << " camera opened" << endl;
     }
-    //thread thread_video(getFrame, &cap);
-
-    //ser.open();
-    //string read;
-    /*while(1)
-    {
-	ser.read(read, 4);
-	cout<<read<<endl;
-	sleep(1000);
-    }*/
     //first frame init
-    waitKey(10);
-    cap >> frame;
-    frame.copyTo(image);
-    while (!target_finder.find(image))
+    cap >> image;
+    imshow("boundbox", image);
+    waitKey(1);
+    setMouseCallback("boundbox", mouseCallback);
+    while (standby)
     {
-        cap >> frame;
-        frame.copyTo(image);
+        Mat tmp;
+        if (!select_flag)
+        {
+            cap >> image;
+            tmp = image.clone();
+        }
+        else
+        {
+            tmp = image.clone();
+            rectangle(tmp, choose, Scalar(0, 0, 255));
+            target_finder.find(choose);
+        }
+
+        imshow("boundbox", tmp);
+        waitKey(1);
     }
     log_file << (clock() - timer) / (float)CLOCKS_PER_SEC << " target found" << endl;
     //led.on();
@@ -366,7 +385,7 @@ int main(int argc, char **argv)
 #ifndef CONTROL
         log_pos << endl;
 #endif
-        if (!(iterate_times % 50))
+        if (!(iterate_times % 20))
         { //image output rate
             vector<int> param = vector<int>(2);
             sprintf(name, "/home/sustec/tracking/images/%03d.jpg", iterate_times);
@@ -374,13 +393,15 @@ int main(int argc, char **argv)
             param[1] = 95;
             imwrite(name, image, param);
         }
+        vwriter << image;
         //write log before & after every step
         iterate_times++;
         log_file << (clock() - timer) / (float)CLOCKS_PER_SEC << " All right, " << (float)(CLOCKS_PER_SEC * iterate_times) / (clock() - timer_fps) << "fps" << endl;
         //waitKey();
     }
     //main loop end
-
+    goFly.data = 0;
+    ready.publish(goFly);
     /* release data transfer */
     int err_code = stop_transfer();
     RETURN_IF_ERR(err_code);

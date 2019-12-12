@@ -41,18 +41,13 @@ public:
 		bbox_get = false;
 		bbox.resize(4);
 	}
-	bool find(cv::Mat image)
+	bool find(cv::Rect b_box)
 	{
-		msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", image).toImageMsg();
-		pub.publish(msg);
-		//cout<<"publish img"<<endl;
-		ros::spinOnce();
-		if (bbox_get)
-		{
-			bbox_get = false;
-			return true;
-		}
-		return false;
+		bbox[0] = b_box.x;
+		bbox[1] = b_box.y;
+		bbox[2] = b_box.width;
+		bbox[3] = b_box.height;
+		return true;
 	}
 	vector<int> bounding_box()
 	{
