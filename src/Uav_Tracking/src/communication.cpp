@@ -247,7 +247,7 @@ void communicator::controlCallback(const uav_tracking::controldata &input)
 {
     if (startControl == false)
     {
-        //initVehicle();
+        initVehicle();
         startControl = true;
     }
     if (vehicle->broadcast->getRC().gear == -4545)
