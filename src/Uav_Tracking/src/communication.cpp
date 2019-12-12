@@ -79,10 +79,30 @@ public:
     void loop(ros::Publisher &pub);
 
     void controlCallback(const uav_tracking::controldata &input);
+    void controlTest();
     void readyCalback(const std_msgs::Int8 &ready);
     float bound(const float &input);
     static int count;
 };
+
+int scanKeyboard()
+{
+    int in;
+    struct termios new_settings;
+    struct termios stored_settings;
+    tcgetattr(0, &stored_settings);
+    new_settings = stored_settings;
+    new_settings.c_lflag &= (~ICANON);
+    new_settings.c_cc[VTIME] = 0;
+    tcgetattr(0, &stored_settings);
+    new_settings.c_cc[VMIN] = 1;
+    tcsetattr(0, TCSANOW, &new_settings);
+
+    in = getchar();
+
+    tcsetattr(0, TCSANOW, &stored_settings);
+    return in;
+}
 
 Vehicle *communicator::getVehicle()
 {
@@ -261,6 +281,34 @@ void communicator::controlCallback(const uav_tracking::controldata &input)
     }
 }
 
+void communicator::controlTest()
+{
+    char c = scanKeyboard();
+    float x = 0, y = 0, z = 0, yaw = 0;
+    //Control::VERTICAL_VELOCITY;
+    switch (c)
+    {
+    case 'w':
+        z += 0.5;
+        break;
+    case 's':
+        z -= 0.5;
+        break;
+    case 'a':
+        y += 0.2;
+        break;
+
+    case 'd':
+        y -= 0.2;
+        break;
+    default:
+        break;
+    }
+    printf("control input is: %f %f %f %f", x, y, z, yaw);
+    Control::CtrlData conInput(0x4A, x, y, z, yaw);
+    vehicle->control->flightCtrl(conInput);
+}
+
 void communicator::readyCalback(const std_msgs::Int8 &ready)
 {
     if (ready.data == 1)
@@ -343,7 +391,6 @@ void communicator::print()
         cout << "xbee data is: " << i.second.number << "," << i.second.x << "," << i.second.vx << "," << i.second.y << "," << i.second.vy << "," << i.second.yaw << endl;
     }
 }
-
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "com");
@@ -362,6 +409,17 @@ int main(int argc, char **argv)
     ros::Subscriber subGo = nh.subscribe("readyTogo", 2, &communicator::readyCalback, &com);
     ros::Rate loop_rate(15);
     int i = 0;
+    /*com.initVehicle();
+    Vehicle *v = com.getVehicle();
+    v->control->takeoff(1);
+    while (ros::ok())
+    {
+        loop_rate.sleep();
+        com.controlTest();
+        ros::spinOnce();
+    }
+    v->releaseCtrlAuthority(10);
+    return -1;*/
     while (ros::ok())
     {
         loop_rate.sleep();
