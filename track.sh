@@ -5,5 +5,5 @@ sleep 0.2
 send "ubuntu\r"
 sleep 0.2
 send "source devel/setup.bash\r"
-send "rosrun uav_tracking main\r"
+send "rosrun uav_tracking main > mainTra.log\r"
 interact

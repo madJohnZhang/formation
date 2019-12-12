@@ -163,7 +163,7 @@ void communicator::initVehicle()
         ACK::getErrorCodeMessage(ack, AUTHORITY);
         exit(-1);
     }
-    cout << "authority init complete" << endl;
+    cout << "---------------authority init complete---------------------" << endl;
 }
 
 void communicator::getSelf()
@@ -252,8 +252,12 @@ void communicator::controlCallback(const uav_tracking::controldata &input)
     }
     if (vehicle->broadcast->getRC().gear == -4545)
     {
-        Control::CtrlData cd(0x4A, bound(input.vx), bound(input.vy), input.vz, input.vyaw);
+        Control::CtrlData cd(0x4A, bound(input.vx), bound(input.vy), bound(input.vz), input.vyaw);
         vehicle->control->flightCtrl(cd);
+    }
+    else
+    {
+        cout << "gear need to pull" << endl;
     }
 }
 
@@ -264,6 +268,15 @@ void communicator::readyCalback(const std_msgs::Int8 &ready)
         int8_t tmp = 1;
         tmp = tmp << seq;
         self.synch |= tmp;
+    }
+    else if (ready.data == 0)
+    {
+        int8_t tmp = 1;
+        tmp = tmp << seq;
+        tmp = ~tmp;
+        self.synch &= tmp;
+        startControl = false;
+        vehicle->releaseCtrlAuthority();
     }
 }
 
