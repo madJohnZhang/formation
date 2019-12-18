@@ -172,7 +172,8 @@ communicator::~communicator()
     delete[] dataOut;
     delete[] dataIn;
     delete[] caliGPS;
-    vehicle->releaseCtrlAuthority(10);
+    ser.close();
+    cout << "ser is closed" << endl;
 }
 
 void communicator::initVehicle()
@@ -252,11 +253,11 @@ float communicator::bound(const float &input)
 {
     if (input > 1)
     {
-        return 1;
+        return 0.5;
     }
     else if (input < -1)
     {
-        return -1;
+        return -0.5;
     }
     else
     {
@@ -316,15 +317,6 @@ void communicator::readyCalback(const std_msgs::Int8 &ready)
         int8_t tmp = 1;
         tmp = tmp << seq;
         self.synch |= tmp;
-    }
-    else if (ready.data == 0)
-    {
-        int8_t tmp = 1;
-        tmp = tmp << seq;
-        tmp = ~tmp;
-        self.synch &= tmp;
-        startControl = false;
-        vehicle->releaseCtrlAuthority();
     }
 }
 

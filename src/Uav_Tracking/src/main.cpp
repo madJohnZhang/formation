@@ -200,7 +200,7 @@ int main(int argc, char **argv)
     vector<int> bounding_box(4);
     Mat image;
     VideoCapture cap;
-    VideoWriter vwriter("/home/sustec/tracking/images/record.avi", -1, 20, Size(640, 480));
+    VideoWriter vwriter("/home/sustec/tracking/images/record.avi", CV_FOURCC('M', 'J', 'P', 'G'), 20, Size(640, 480));
     //Mat frame;
     cap.open(0);
     if (!cap.isOpened())
@@ -400,8 +400,6 @@ int main(int argc, char **argv)
         //waitKey();
     }
     //main loop end
-    goFly.data = 0;
-    ready.publish(goFly);
     /* release data transfer */
     int err_code = stop_transfer();
     RETURN_IF_ERR(err_code);
