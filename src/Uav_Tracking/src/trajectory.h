@@ -34,6 +34,14 @@ public:
 	{
 		assert(current_pose.size() == 3);
 		pos[3] = (current_pose[0] * z) / current_pose[2]; //yaw
+		if(team[0]>1)
+		{
+			team[0]=pow(team[0],0.5);
+		}
+		if(team[1]>1)
+		{
+			team[1]=pow(team[1],0.5);
+		}
 		pair<float, float> old = filter.back();
 		filter.pop();
 		filter.push({team[0], team[1]});
