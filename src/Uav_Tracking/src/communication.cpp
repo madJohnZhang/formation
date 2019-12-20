@@ -171,8 +171,7 @@ communicator::~communicator()
     delete[] dataIn;
     delete[] caliGPS;
     ser.close();
-    cout << "ser.close() over\n";
-    //vehicle->releaseCtrlAuthority(5);
+    cout << "ser is closed" << endl;
 }
 
 void communicator::initVehicle()
@@ -252,11 +251,11 @@ float communicator::bound(const float &input)
 {
     if (input > 1)
     {
-        return 1;
+        return 0.5;
     }
     else if (input < -1)
     {
-        return -1;
+        return -0.5;
     }
     else
     {

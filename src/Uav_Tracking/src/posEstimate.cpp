@@ -6,7 +6,7 @@
 #define NODE 2
 #define ESTIMATEPARA 3 //pos x, pos y, yaw
 #define ALPHA 0.01
-#define TIMEINTERVAL 0.05
+#define TIMEINTERVAL 1
 
 using namespace cv;
 using namespace std;
