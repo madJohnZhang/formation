@@ -20,3 +20,6 @@ There are several ways to realize the small parts of the system.
 2. the initialization part: use the static image when bounding the box; add the people detection module.
 3. change the script, write the console output to a log file.
 4. link the device to the specific serial name.
+
+#### 2019.12.15
+use (fuser) to check the pid pocessing the specific device

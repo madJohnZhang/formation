@@ -3,7 +3,6 @@
 #include <iostream>
 #include <ros/ros.h>
 #include <string.h>
-#include <serial/serial.h>
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <mutex>
@@ -35,7 +34,6 @@ private:
 
 	State self;
 	unordered_map<int, State> others;
-	serial::Serial ser;
 
 	int formationNum;
 	int seq;

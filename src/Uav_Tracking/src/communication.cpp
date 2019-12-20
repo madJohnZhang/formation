@@ -113,7 +113,6 @@ communicator::communicator()
 {
     linuxEnvironment = new LinuxSetup(1, NULL);
     vehicle = linuxEnvironment->getVehicle();
-    cout << "here" << endl;
     if (vehicle == NULL)
     {
         std::cout << "Vehicle not initialized, exiting.\n";
@@ -135,7 +134,6 @@ communicator::communicator()
     serial::Timeout timeout(100);
     fs["port"] >> port;
     fs["baudrate"] >> baudrate;
-    cout << "and here" << endl;
     ser.setTimeout(timeout);
     ser.setPort(port);
     ser.setBaudrate(baudrate);
@@ -172,7 +170,9 @@ communicator::~communicator()
     delete[] dataOut;
     delete[] dataIn;
     delete[] caliGPS;
-    vehicle->releaseCtrlAuthority(10);
+    ser.close();
+    cout << "ser.close() over\n";
+    //vehicle->releaseCtrlAuthority(5);
 }
 
 void communicator::initVehicle()
@@ -316,15 +316,6 @@ void communicator::readyCalback(const std_msgs::Int8 &ready)
         int8_t tmp = 1;
         tmp = tmp << seq;
         self.synch |= tmp;
-    }
-    else if (ready.data == 0)
-    {
-        int8_t tmp = 1;
-        tmp = tmp << seq;
-        tmp = ~tmp;
-        self.synch &= tmp;
-        startControl = false;
-        vehicle->releaseCtrlAuthority();
     }
 }
 

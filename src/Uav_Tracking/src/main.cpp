@@ -97,7 +97,7 @@ public:
     }
 };
 
-void testXBEE()
+/*void testXBEE()
 {
     fstream dataSelf("dataSelftest.csv", ios::trunc | ios::out);
     fstream dataXb1("dataXb1test.csv", ios::trunc | ios::out);
@@ -142,6 +142,7 @@ void testXBEE()
     dataXb2.close();
     exit(0);
 }
+*/
 Point origin;
 Rect choose;
 bool select_flag = false, standby = true;
@@ -200,7 +201,7 @@ int main(int argc, char **argv)
     vector<int> bounding_box(4);
     Mat image;
     VideoCapture cap;
-    VideoWriter vwriter("/home/sustec/tracking/images/record.avi", -1, 20, Size(640, 480));
+    VideoWriter vwriter("/home/sustec/tracking/images/record.avi", CV_FOURCC('M', 'J', 'P', 'G'), 20, Size(640, 480));
     //Mat frame;
     cap.open(0);
     if (!cap.isOpened())
@@ -235,6 +236,7 @@ int main(int argc, char **argv)
         imshow("boundbox", tmp);
         waitKey(1);
     }
+    destroyWindow("boundbox");
     log_file << (clock() - timer) / (float)CLOCKS_PER_SEC << " target found" << endl;
     //led.on();
     log_file << (clock() - timer) / (float)CLOCKS_PER_SEC << " start tracking init" << endl;
@@ -400,8 +402,6 @@ int main(int argc, char **argv)
         //waitKey();
     }
     //main loop end
-    goFly.data = 0;
-    ready.publish(goFly);
     /* release data transfer */
     int err_code = stop_transfer();
     RETURN_IF_ERR(err_code);

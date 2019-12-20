@@ -4,7 +4,6 @@
 #include <iostream>
 #include <ros/ros.h>
 #include <string.h>
-#include <serial/serial.h>
 #include <opencv2/opencv.hpp>
 
 class State
