@@ -351,7 +351,7 @@ int main(int argc, char **argv)
             Mat tmp = formation.getInput();
             formationInput[0] = tmp.at<float>(0);
             formationInput[1] = tmp.at<float>(1);
-            cout << "formationinput" << formationInput[0] << " " << formationInput[1] << endl;
+            cout << "formation input " << formationInput[0] << " " << formationInput[1] << endl;
         }
         //trajectory generator
         //obstacle input removed temporarily

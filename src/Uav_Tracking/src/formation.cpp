@@ -197,7 +197,7 @@ Mat Formation::getInput()
 	Mat result = Mat::zeros(2, 1, CV_32FC1);
 	Mat target = Mat::zeros(NODE, 3, CV_64FC1);
 
-	if (queuesize > 0 && others.size() == formationNum - 1)
+	if (others.size() == formationNum - 1)
 	{
 		for (auto info : others)
 		{
