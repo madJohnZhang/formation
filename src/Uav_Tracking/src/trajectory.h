@@ -42,7 +42,7 @@ public:
 		}
 		if (team[1] > 1)
 		{
-			team[1] = pow(team[1], 0.5);
+			team[1]=pow(team[1],0.5);
 		}*/
 		pair<float, float> old = filter.back();
 		filter.pop();
