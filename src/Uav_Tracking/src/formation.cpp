@@ -195,7 +195,7 @@ Mat Formation::getInput()
 	Mat result = Mat::zeros(2, 1, CV_32FC1);
 	Mat target = Mat::zeros(NODE, 3, CV_64FC1);
 
-	if (queuesize > 0 && others.size() == formationNum - 1)
+	if (others.size() == formationNum - 1)
 	{
 		for (auto info : others)
 		{
@@ -208,10 +208,9 @@ Mat Formation::getInput()
 		cout << "got vel: " << v << endl;
 		Mat tarPosvel(pos + v);
 		tarPosvel.convertTo(tarPosvel, CV_32FC1);
-		//ui += coefficients * (self.posVel - f.col(self.number - 1) - tarPosvel);
+		ui += coefficients * (self.posVel - f.col(self.number - 1) - tarPosvel);
 		result.at<float>(0) = ui.at<float>(0) * (float)cos(yaw) + ui.at<float>(1) * (float)sin(yaw);
 		result.at<float>(1) = ui.at<float>(1) * (float)cos(yaw) - ui.at<float>(0) * (float)sin(yaw);
-		queuesize--;
 	}
 	return result;
 }

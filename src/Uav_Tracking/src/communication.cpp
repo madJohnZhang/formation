@@ -251,11 +251,11 @@ float communicator::bound(const float &input)
 {
     if (input > 1)
     {
-        return 0.5;
+        return 1;
     }
     else if (input < -1)
     {
-        return -0.5;
+        return -1;
     }
     else
     {
@@ -273,6 +273,7 @@ void communicator::controlCallback(const uav_tracking::controldata &input)
     {
         Control::CtrlData cd(0x4A, bound(input.vx), bound(input.vy), bound(input.vz), input.vyaw);
         vehicle->control->flightCtrl(cd);
+        cout << "real control signal is: " << cd.x << " " << cd.y << " " << cd.z << " " << cd.yaw << "\n";
     }
     else
     {

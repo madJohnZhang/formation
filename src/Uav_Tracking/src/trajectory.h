@@ -2,7 +2,7 @@
 #include <vector>
 #include <cassert>
 #include <queue>
-#define QSIZE 20
+#define QSIZE 10
 //#define SWITCH
 using namespace std;
 class Trajectory
@@ -34,14 +34,16 @@ public:
 	{
 		assert(current_pose.size() == 3);
 		pos[3] = (current_pose[0] * z) / current_pose[2]; //yaw
-		if (team[0] > 1)
+		team[0] = bound(team[0]);
+		team[1] = bound(team[1]);
+		/*if (team[0] > 1)
 		{
 			team[0] = pow(team[0], 0.5);
 		}
 		if (team[1] > 1)
 		{
 			team[1] = pow(team[1], 0.5);
-		}
+		}*/
 		pair<float, float> old = filter.back();
 		filter.pop();
 		filter.push({team[0], team[1]});
@@ -101,7 +103,22 @@ public:
 			pos[3] = (current_pose[0] * z) / current_pose[2];
 		}
 	}*/
-
+	//add boundary
+	float bound(const float &input)
+	{
+		if (input > 1)
+		{
+			return 1;
+		}
+		else if (input < -1)
+		{
+			return -1;
+		}
+		else
+		{
+			return input;
+		}
+	}
 	vector<float> position()
 	{
 		return pos;
