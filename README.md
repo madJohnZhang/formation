@@ -29,3 +29,10 @@ use (fuser) to check the pid pocessing the specific device
 2. add integration of PID
 3. increase the formation size
 4. add bound in the control queue
+
+#### 2019.12.26
+add an information.
+control signal, body frame, compared to the head direction
+x->positive (forward), negative (backward)
+y->positive (right), negative (left)
+z->positive (up), negative (down)
