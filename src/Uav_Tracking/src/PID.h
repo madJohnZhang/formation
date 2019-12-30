@@ -4,6 +4,9 @@
 #include <fstream>
 #include <assert.h>
 using namespace std;
+
+#define QSIZE 10
+
 class PID
 {
 private:
@@ -14,8 +17,20 @@ private:
 	vector<float> Ki;
 	vector<float> Kd;
 
+	queue<pair<float, float>> filter;
+	pair<float, float> filterSum;
+
 public:
 	float vx, vy, vz, vyaw;
+	PID()
+	{
+
+		for (int i = 0; i < QSIZE; i++)
+		{
+			filter.push({0, 0});
+		}
+		filterSum = {0, 0};
+	}
 	void init(const char *filename)
 	{
 		vx = 0;
@@ -62,6 +77,7 @@ public:
 			cout << "Kp is:" << i << endl;
 		}
 	}
+	//update control signal with PID para
 	void update(vector<float> current)
 	{
 		assert(current.size() >= 4);
@@ -77,6 +93,36 @@ public:
 		vy = Kp[1] * current[1] + Ki[1] * sum[1] + Kd[1] * diff[1];
 		vz = Kp[2] * current[2] + Ki[2] * sum[2] + Kd[2] * diff[2];
 		vyaw = Kp[3] * current[3] + Ki[3] * sum[3] + Kd[3] * diff[3];
+
+		filterSig();
+	}
+	//average filter
+	void filterSig()
+	{
+		vx = bound(vx);
+		vy = bound(vy);
+		pair<float, float> old = filter.back();
+		filter.pop();
+		filter.push({vx, vy});
+		filterSum.first += vx - old.first;
+		filterSum.second += vy - old.second;
+		vx = filterSum.first / QSIZE;
+		vy = filterSum.second / QSIZE;
+	}
+	float bound(const float &input)
+	{
+		if (input > 1)
+		{
+			return 1;
+		}
+		else if (input < -1)
+		{
+			return -1;
+		}
+		else
+		{
+			return input;
+		}
 	}
 	void updateFromObs(vector<float> obs)
 	{

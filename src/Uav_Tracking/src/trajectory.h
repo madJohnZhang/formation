@@ -10,17 +10,11 @@ class Trajectory
 private:
 	float y, z;
 	vector<float> pos;
-	queue<pair<float, float>> filter;
-	pair<float, float> filterSum;
 
 public:
 	Trajectory()
 	{
-		for (int i = 0; i < QSIZE; i++)
-		{
-			filter.push({0, 0});
-		}
-		filterSum = {0, 0};
+		
 	}
 	void init(vector<float> current_pose)
 	{
@@ -34,23 +28,8 @@ public:
 	{
 		assert(current_pose.size() == 3);
 		pos[3] = (current_pose[0] * z) / current_pose[2]; //yaw
-		team[0] = bound(team[0]);
-		team[1] = bound(team[1]);
-		/*if (team[0] > 1)
-		{
-			team[0] = pow(team[0], 0.5);
-		}
-		if (team[1] > 1)
-		{
-			team[1]=pow(team[1],0.5);
-		}*/
-		pair<float, float> old = filter.back();
-		filter.pop();
-		filter.push({team[0], team[1]});
-		filterSum.first += team[0] - old.first;
-		filterSum.second += team[1] - old.second;
-		pos[0] = filterSum.first / QSIZE;
-		pos[1] = filterSum.second / QSIZE;
+		pos[0] = team[0];
+		pos[1] = team[1];
 
 		//pos[2] = -(current_pose[1] - y) / current_pose[2]; //vertical
 #ifdef SWITCH
