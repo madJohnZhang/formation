@@ -52,6 +52,8 @@ private:
 	vector<vector<double>> tmpInit;
 	//double *tmpInit;
 
+	VideoWriter formationFigure;
+
 private:
 	const static int sPACKAGESIZE = sizeof(int) + sizeof(float) * 5;
 
@@ -125,9 +127,9 @@ Formation::Formation(int argc, char **argv)
 	}
 	//tmpInit = new double[3 * NODE * SERIES];
 	//memset(tmpInit, 0, 3 * sizeof(double) * NODE * SERIES);
-
-	double LATITUDE_CALI = 180.0 / PI * 111000 * cos(23 * PI / 180);
-	double LONGITUDE_CALI = 180.0 / PI * 111000;
+	//double LATITUDE_CALI = 180.0 / PI * 111000 * cos(23 * PI / 180);
+	//double LONGITUDE_CALI = 180.0 / PI * 111000;
+	formationFigure.open("/home/sustec/tracking/images/formation.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, Size(1000, 1000));
 }
 
 Formation::~Formation()
@@ -194,16 +196,24 @@ Mat Formation::getInput()
 	Mat ui = Mat::zeros(2, 1, CV_32FC1);
 	Mat result = Mat::zeros(2, 1, CV_32FC1);
 	Mat target = Mat::zeros(NODE, 3, CV_64FC1);
-
+	Mat figure(1000, 1000, CV_8UC3, Scalar(255, 255, 255));
+	Scalar black(0, 0, 0);
+	Point x1(499, 0), x2(499, 999), y1(0, 499), y2(999, 499);
+	arrowedLine(figure, x2, x1, black, 2, 8, 0, 0.02);
+	arrowedLine(figure, y1, y2, black, 2, 8, 0, 0.02);
+	circle(figure, {499, 499}, 2, black, 2);
 	if (others.size() == formationNum - 1)
 	{
 		for (auto info : others)
 		{
 			ui += coefficients * ((self.posVel - f.col(self.number - 1)) - (info.second.posVel - f.col(info.second.number - 1)));
+			circle(figure, {info.second.posVel.at<float>(1) * 50 + 499, info.second.posVel.at<float>(3) * 50 + 499}, 2, Scalar(0, 255, 0), 2);
 		}
+		circle(figure, {self.posVel.at<float>(1) * 50 + 499, self.posVel.at<float>(3) * 50 + 499}, 2, Scalar(0, 255, 0), 2);
 		getStates(target);
 		Scalar pos = posE.position(target);
 		Scalar v = posE.velocity();
+		circle(figure, {pos[0] * 50 + 499, pos[1] * 50 + 499}, 2, Scalar(0, 255, 255), 2);
 		cout << "got position" << pos << endl;
 		cout << "got vel: " << v << endl;
 		Mat tarPosvel(pos + v);
@@ -211,6 +221,7 @@ Mat Formation::getInput()
 		ui += coefficients * (self.posVel - f.col(self.number - 1) - tarPosvel);
 		result.at<float>(0) = ui.at<float>(0) * (float)cos(yaw) + ui.at<float>(1) * (float)sin(yaw);
 		result.at<float>(1) = ui.at<float>(1) * (float)cos(yaw) - ui.at<float>(0) * (float)sin(yaw);
+		formationFigure << figure;
 	}
 	return result;
 }

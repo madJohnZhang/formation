@@ -271,6 +271,9 @@ void communicator::controlCallback(const uav_tracking::controldata &input)
     }
     if (vehicle->broadcast->getRC().gear == -4545)
     {
+        /*
+    *** test Control::StableEnable 
+    */
         Control::CtrlData cd(0x4A, bound(input.vx), bound(input.vy), bound(input.vz), input.vyaw);
         vehicle->control->flightCtrl(cd);
         cout << "real control signal is: " << cd.x << " " << cd.y << " " << cd.z << " " << cd.yaw << "\n";

@@ -101,7 +101,7 @@ public:
 	{
 		vx = bound(vx);
 		vy = bound(vy);
-		pair<float, float> old = filter.back();
+		pair<float, float> old = filter.front();
 		filter.pop();
 		filter.push({vx, vy});
 		filterSum.first += vx - old.first;
