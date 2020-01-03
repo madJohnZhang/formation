@@ -202,6 +202,7 @@ int main(int argc, char **argv)
     Mat image;
     VideoCapture cap;
     VideoWriter vwriter("/home/sustec/tracking/images/record.avi", CV_FOURCC('M', 'J', 'P', 'G'), 20, Size(640, 480));
+    VideoWriter vwriterTest("/home/sustec/tracking/recordT.avi", CV_FOURCC('M', 'J', 'P', 'G'), 20, Size(640, 480));
     //Mat frame;
     cap.open(0);
     if (!cap.isOpened())
@@ -282,7 +283,7 @@ int main(int argc, char **argv)
         ros::spinOnce();
         cap >> frame;
         frame.copyTo(image);
-
+        vwriterTest << frame;
         if (cooldown++ == 50)
         {
             ready.publish(goFly);
