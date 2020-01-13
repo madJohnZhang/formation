@@ -176,6 +176,11 @@ communicator::~communicator()
 
 void communicator::initVehicle()
 {
+    while (vehicle->broadcast->getRC().mode != 8000)
+    {
+        cout << "switch the mode to F mode. activate fail-------------" << endl;
+        waitKey(500);
+    }
     ACK::ErrorCode ack = vehicle->obtainCtrlAuthority(1000);
     if (ACK::getError(ack))
     {
@@ -271,6 +276,7 @@ void communicator::controlCallback(const uav_tracking::controldata &input)
     }
     if (vehicle->broadcast->getRC().gear == -4545)
     {
+
         /*
     *** test Control::StableEnable 
     */
