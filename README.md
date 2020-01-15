@@ -36,3 +36,10 @@ control signal, body frame, compared to the head direction
 x->positive (forward), negative (backward)
 y->positive (right), negative (left)
 z->positive (up), negative (down)
+
+#### 2020.01.14
+1. filter the position. reduce the iteration times of the position estimate (not the initial part), to decrease the influence of the noise. maybe using variance reduction techniches is also a way.
+2. ki for horizontal control. kp for yaw control.
+3. record info from ui, filter ui to position.
+4. adjust pid parameter of yaw control separately.
+5. test height control.

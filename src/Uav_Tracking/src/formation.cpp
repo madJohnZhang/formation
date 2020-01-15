@@ -207,13 +207,13 @@ Mat Formation::getInput()
 		for (auto info : others)
 		{
 			ui += coefficients * ((self.posVel - f.col(self.number - 1)) - (info.second.posVel - f.col(info.second.number - 1)));
-			circle(figure, {(int)info.second.posVel.at<float>(0) * 50 + 499, (int)info.second.posVel.at<float>(2) * 50 + 499}, 2, Scalar(0, 255, 0), 2);
+			circle(figure, {(int)info.second.posVel.at<float>(0) * 50 + 499, (int)info.second.posVel.at<float>(2) * 50 + 499}, 5, Scalar(0, 255, 0), 5);
 		}
-		circle(figure, {(int)self.posVel.at<float>(0) * 50 + 499, (int)self.posVel.at<float>(2) * 50 + 499}, 2, Scalar(0, 255, 0), 2);
+		circle(figure, {(int)self.posVel.at<float>(0) * 50 + 499, (int)self.posVel.at<float>(2) * 50 + 499}, 5, Scalar(255, 150, 0), 5);
 		getStates(target);
 		Scalar pos = posE.position(target);
 		Scalar v = posE.velocity();
-		circle(figure, {(int)pos[0] * 50 + 499, (int)pos[2] * 50 + 499}, 2, Scalar(0, 255, 255), 2);
+		circle(figure, {(int)pos[0] * 50 + 499, (int)pos[2] * 50 + 499}, 5, Scalar(255, 0, 0), 5);
 		cout << "got position" << pos << endl;
 		cout << "got vel: " << v << endl;
 		Mat tarPosvel(pos + v);
