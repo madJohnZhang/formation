@@ -197,7 +197,6 @@ void communicator::getSelf()
     double coeX = 180. * 102000 / 3.1416;
     double coeY = 180. * 111000 / 3.1416;
 
-    self.number |= (synch << 8);
     Telemetry::GlobalPosition gp = vehicle->broadcast->getGlobalPosition();
     double posX = (gp.latitude - caliGPS[0]) * coeX;
     double posY = (gp.longitude - caliGPS[1]) * coeY;
@@ -213,7 +212,9 @@ void communicator::getSelf()
 //send info to other agent by XBEE
 void communicator::sendInfo()
 {
-    memcpy(dataOut, &self, sizeof(uav_tracking::posvel));
+    uav_tracking::posvel sendTmp = self;
+    sendTmp.number |= synch;
+    memcpy(dataOut, &sendTmp, sizeof(uav_tracking::posvel));
     ser.write(dataOut, sPACKAGESIZE);
     cout << "infor sent" << endl;
 }
