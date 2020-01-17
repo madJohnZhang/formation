@@ -37,6 +37,7 @@ private:
     bool startControl;
 
     uav_tracking::posvel self;
+    int synch;
     map<int, uav_tracking::posvel> others;
 
     Mat coefficients;
@@ -118,7 +119,6 @@ communicator::communicator()
         std::cout << "Vehicle not initialized, exiting.\n";
         exit(-1);
     }
-    self.synch = 0;
     startControl = false;
     fs.open("formation.xml", FileStorage::READ);
     fs["formationNum"] >> formationNum;
@@ -144,6 +144,8 @@ communicator::communicator()
     ser.flushOutput();
     fs.release();
 
+    self.number = seq;
+    synch = 0;
     dataOut = new uint8_t[sPACKAGESIZE];
     dataIn = new uint8_t[sPACKAGESIZE * (formationNum - 1)];
     caliGPS = new double[2];
@@ -195,7 +197,7 @@ void communicator::getSelf()
     double coeX = 180. * 102000 / 3.1416;
     double coeY = 180. * 111000 / 3.1416;
 
-    self.number = seq;
+    self.number |= (synch << 8);
     Telemetry::GlobalPosition gp = vehicle->broadcast->getGlobalPosition();
     double posX = (gp.latitude - caliGPS[0]) * coeX;
     double posY = (gp.longitude - caliGPS[1]) * coeY;
@@ -225,10 +227,12 @@ void communicator::getInfoFromOthers()
     for (int i = 0; i < formationNum - 1; i++)
     {
         memcpy(&tmp, dataIn + i * sPACKAGESIZE, sizeof(uav_tracking::posvel));
+        int otherSynch = (tmp.number & 0xFF00) >> 8;
+        tmp.number &= 0x00FF;
         if (tmp.number >= 1 && tmp.number <= formationNum && tmp.x != 0 && tmp.y != 0)
         {
+            synch |= otherSynch;
             others[tmp.number] = tmp;
-            self.synch |= tmp.synch;
         }
         cout << "the yaw from " << tmp.number << "is " << tmp.x << " " << tmp.y << " " << tmp.yaw << endl;
     }
@@ -324,7 +328,7 @@ void communicator::readyCalback(const std_msgs::Int8 &ready)
     {
         int8_t tmp = 1;
         tmp = tmp << seq;
-        self.synch |= tmp;
+        synch |= tmp;
     }
 }
 
@@ -379,6 +383,7 @@ void communicator::loop(ros::Publisher &pub)
         tmp.pack.push_back(i.second);
     }
     tmp.yaw = yawAngle;
+    tmp.synch = synch;
     pub.publish(tmp);
 }
 

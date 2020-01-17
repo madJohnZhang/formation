@@ -79,6 +79,7 @@ void Formation::packCallback(const uav_tracking::packs &input)
 	State tmp;
 	//mtxqueue.lock();
 	yaw = input.yaw;
+	synch = input.synch;
 	for (auto i = input.pack.begin(); i != input.pack.end(); i++)
 	{
 		tmp.number = i->number;
@@ -90,7 +91,6 @@ void Formation::packCallback(const uav_tracking::packs &input)
 		if (tmp.number == seq)
 		{
 			self = tmp;
-			synch = i->synch;
 		}
 		else
 		{
