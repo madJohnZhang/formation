@@ -55,3 +55,8 @@ z->positive (up), negative (down)
 
 1. add the decentralized version of the pos estimation.
 2. think about the way of info exchange.
+
+#### 2020.02.21
+
+1. add the final signal output relation between ground frame and the body frame
+2. ground and body frame explanation. about x and y
