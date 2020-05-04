@@ -60,3 +60,8 @@ z->positive (up), negative (down)
 
 1. add the final signal output relation between ground frame and the body frame
 2. ground and body frame explanation. about x and y
+
+#### 2020.03.18
+
+1. add the class of decentralized position esimation. extract the position estimation class as the parent class with the centralized and the decentralized inheriting publicly. 
+2. 

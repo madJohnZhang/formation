@@ -31,6 +31,7 @@ private:
 	FileStorage fs;
 	mutex mtxqueue;
 	int queuesize;
+	int decFlag;
 
 	State self;
 	unordered_map<int, State> others;
@@ -42,8 +43,10 @@ private:
 	Mat coefficients;
 	Mat topo;
 	Mat f;
+	Mat otherEstimate;
 
 	posEstimate posE;
+	posEstimateDec posEDec;
 
 	float yaw;
 	double *caliGPS;
@@ -56,19 +59,23 @@ private:
 
 private:
 	const static int sPACKAGESIZE = sizeof(int) + sizeof(float) * 5;
+	const static int sDECPACKAGESIZE = sPACKAGESIZE + sizeof(int) * 2;
 
 public:
 	Formation(int argc, char **argv);
 	~Formation();
 
 	void init();
+	void initC(); //centralized initialization
+	void initD(); //decentralized initialization
 
 	void getStates(Mat &target);
 
 	Mat getInput();
 
 	void packCallback(const uav_tracking::packs &input);
-
+	void packDecCallback(const uav_tracking::packsDec &input);
+	void xyDecPub(ros::Publisher &xyDec);
 	static int count;
 };
 
@@ -104,6 +111,37 @@ void Formation::packCallback(const uav_tracking::packs &input)
 	//mtxqueue.unlock();
 }
 
+void Formation::packDecCallback(const uav_tracking::packsDec &input)
+{
+	State tmp;
+	//mtxqueue.lock();
+	yaw = input.yaw;
+	synch = input.synch;
+	for (auto i = input.pack.begin(); i != input.pack.end(); i++)
+	{
+		tmp.number = i->number;
+		tmp.yaw = i->yaw;
+		tmp.posVel.at<float>(0) = i->x;
+		tmp.posVel.at<float>(1) = i->vx;
+		tmp.posVel.at<float>(2) = i->y;
+		tmp.posVel.at<float>(3) = i->vy;
+		otherEstimate.at<double>(i->number - 1, 0) = i->esX;
+		otherEstimate.at<double>(i->number - 1, 1) = i->esY;
+		if (tmp.number == seq)
+		{
+			self = tmp;
+		}
+		else
+		{
+			others[tmp.number] = tmp;
+		}
+	}
+	if (others.size() == formationNum - 1)
+	{
+		queuesize++;
+	}
+}
+
 Formation::Formation(int argc, char **argv)
 {
 	queuesize = 0;
@@ -117,18 +155,27 @@ Formation::Formation(int argc, char **argv)
 	coefficients.convertTo(coefficients, CV_32FC1);
 	f.convertTo(f, CV_32FC1);
 	fs.release();
-
-	dataOut = new uint8_t[sPACKAGESIZE];
-	dataIn = new uint8_t[sPACKAGESIZE * (formationNum - 1)];
 	caliGPS = new double[2];
-	for (int i = 0; i < SERIES; i++)
+
+	if (strcmp(argv[0], "dec"))
 	{
-		tmpInit.push_back(vector<double>(3 * NODE, 0));
+		posEDec.setTopoNum(seq, topo);
+		decFlag = 1;
+		dataOut = new uint8_t[sDECPACKAGESIZE];
+		dataIn = new uint8_t[sDECPACKAGESIZE * (formationNum - 1)];
 	}
-	//tmpInit = new double[3 * NODE * SERIES];
-	//memset(tmpInit, 0, 3 * sizeof(double) * NODE * SERIES);
-	//double LATITUDE_CALI = 180.0 / PI * 111000 * cos(23 * PI / 180);
-	//double LONGITUDE_CALI = 180.0 / PI * 111000;
+	else
+	{
+		decFlag = 0;
+		dataOut = new uint8_t[sPACKAGESIZE];
+		dataIn = new uint8_t[sPACKAGESIZE * (formationNum - 1)];
+
+		for (int i = 0; i < SERIES; i++)
+		{
+			tmpInit.push_back(vector<double>(3 * NODE, 0));
+		}
+	}
+
 	formationFigure.open("/home/sustec/tracking/images/formation.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, Size(1000, 1000));
 }
 
@@ -158,6 +205,28 @@ void Formation::init()
 		cout << "not enough ready agents" << endl;
 		return;
 	}
+	if (decFlag)
+	{
+		initD();
+	}
+	else
+	{
+		initC();
+	}
+}
+void Formation::initD()
+{
+	Mat tmps(1, 3, CV_64FC1);
+	tmps.at<double>(0) = self.posvel.at<float>(0);
+	tmps.at<double>(1) = self.posvel.at<float>(2);
+	tmps.at<double>(2) = self.yaw;
+
+	posEDec.position(tmps, count);
+	count++;
+}
+void Formation::initC()
+{
+
 	//size of data at one moment
 	vector<double> tmp(3 * NODE, 0.);
 	tmp[3 * (self.number - 1)] = self.posVel.at<double>(0);
@@ -187,6 +256,15 @@ void Formation::init()
 	}
 }
 
+void Formation::xyDecPub(ros::Publisher &xyDec)
+{
+	if (decFlag)
+	{
+		Scalar tmp = posEDec.position();
+		xyDec.pub({tmp[0], tmp[2]});
+	}
+}
+
 /*
 	the yaw is in radian
 */
@@ -210,9 +288,19 @@ Mat Formation::getInput()
 			circle(figure, {(int)info.second.posVel.at<float>(0) * 50 + 499, (int)info.second.posVel.at<float>(2) * 50 + 499}, 5, Scalar(0, 255, 0), 5);
 		}
 		circle(figure, {(int)self.posVel.at<float>(0) * 50 + 499, (int)self.posVel.at<float>(2) * 50 + 499}, 5, Scalar(255, 150, 0), 5);
-		getStates(target);
-		Scalar pos = posE.position(target);
-		Scalar v = posE.velocity();
+		Scalar pos;
+		Scalar v;
+		if (decFlag)
+		{
+			pos = posEDec.position(otherEstimate, count);
+			v = posEDec.velocity();
+		}
+		else
+		{
+			getStates(target);
+			pos = posE.position(target);
+			v = posE.velocity();
+		}
 		circle(figure, {(int)pos[0] * 50 + 499, (int)pos[2] * 50 + 499}, 5, Scalar(255, 0, 0), 5);
 		cout << "got position" << pos << endl;
 		cout << "got vel: " << v << endl;
