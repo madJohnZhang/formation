@@ -148,6 +148,7 @@ void Formation::init()
 	//judge if all the agents in the network ready
 	int countAgent = 0;
 	int8_t tmpSynch = synch;
+	cout << "synch is: " << synch << endl;
 	while (tmpSynch != 0)
 	{
 		tmpSynch &= tmpSynch - 1;
