@@ -38,7 +38,7 @@ public:
     posEstimateDec();
     posEstimateDec(int number, Mat &topology);
 
-    Mat gradient(Mat selfstate);
+    Scalar gradient(Mat selfstate);
 
     void setTopoNum(int number, Mat &topology);
     Scalar position(Mat selfstate, Mat xys, int n);
@@ -49,6 +49,7 @@ posEstimateDec::posEstimateDec()
 {
     xy = {0., 0., 0., 0.};
 }
+//useless for now
 posEstimateDec::posEstimateDec(int number, Mat &topology)
 {
     xy = {0., 0., 0., 0.};
@@ -70,33 +71,39 @@ void posEstimateDec::setTopoNum(int number, Mat &topology)
 
 Scalar posEstimateDec::gradient(Mat selfstate) //self state only
 {
-    Mat A = state.col(2);
-    Mat B = state.col(1) - state.col(0).mul(A);
+    Mat A = selfstate.col(2);
+    Mat B = selfstate.col(1) - selfstate.col(0).mul(A);
 
     double data[2];
     data[0] = sum(2 * (A.mul(A) * xy[0] + A.mul(B) - A * xy[2]) / (A.mul(A) + 1))[0];
     data[1] = sum(2 * (xy[2] - A * xy[0] - B) / (A.mul(A) + 1))[0];
     return Scalar(data[0], 0, data[1], 0);
 }
-
+//xy: (x,0,y,0)
 Scalar posEstimateDec::position(Mat selfstate, Mat xys, int n)
 {
     Scalar gradNow = gradient(selfstate);
     if (n > 1)
     {
-        xy_2 = xy_1;
-
-        xys.row(num - 1) = xy;
-        xy_1 = xys;
-
         lastxy = xy;
-        xy = IW.row(num - 1) * xy_1 - wtilder.row(number - 1) * xy_2 - ALPHA * (gradNow - grad);
+
+        xy_2 = xy_1.clone();
+
+        xys.row(num - 1) = Scalar(xy[0], xy[2]);
+        xy_1 = xys.clone();
+
+        Scalar gradMinus = gradNow - grad;
+        gradMinus[1] = gradMinus[2];
+        gradMinus[2] = 0;
+        Mat minus(1, 2, CV_64FC1, gradMinus);
+        Mat tmp = IW.row(num - 1) * xy_1 - wtilder.row(num - 1) * xy_2 - ALPHA * minus;
+        xy[0] = tmp.at<double>(0);
+        xy[2] = tmp.at<double>(1);
         grad = gradNow;
     }
     else
     {
-        xys.row(num - 1) = xy;
-        xy_1 = xys;
+        xy_1 = xys.clone();
         xy = xy - ALPHA * gradNow;
         grad = gradNow;
     }
