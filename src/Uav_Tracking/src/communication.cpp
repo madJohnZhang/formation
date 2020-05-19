@@ -194,6 +194,7 @@ communicator::communicator(char *argv)
 
 communicator::~communicator()
 {
+    //dec
     delete linuxEnvironment;
     delete[] dataOut;
     delete[] dataIn;

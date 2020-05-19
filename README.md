@@ -65,3 +65,18 @@ z->positive (up), negative (down)
 
 1. add the class of decentralized position esimation. extract the position estimation class as the parent class with the centralized and the decentralized inheriting publicly. 
 2. 
+
+#### 2020.05.11
+
+Plan for experiment
+1. buy two carts and backup XBees, install equipment of the third drone.
+2. fix the control para of yaw, add the height control.
+3. add the discrete integral of the horizontal control under formation of two agents(one in the air, one on the ground), since for now the drone is controlled by
+velocity while the control logic is accelaration.
+4. test the formation of three UAVs under the centralized setting.
+5. the decentralized setting.
+6. obstacle avoidance.
+
+#### 2020.05.15
+
+notes: create computation network.

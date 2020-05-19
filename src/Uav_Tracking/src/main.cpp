@@ -181,6 +181,7 @@ int main(int argc, char **argv)
     ros::Subscriber sub = nh.subscribe("posvel_msg", 10, &Formation::packCallback, &formation);
     ros::Publisher pub = nh.advertise<uav_tracking::controldata>("controlData", 1);
     ros::Publisher ready = nh.advertise<std_msgs::Int8>("readyTogo", 2);
+
     ros::Subscriber subDec = nh.subscribe("posvel_msg_dec", 2, &Formation::packDecCallback, &formation);
     ros::Publisher xyDec = nh.advertise<uav_tracking::xyDectralize>("xyDec", 1);
 

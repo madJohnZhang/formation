@@ -21,6 +21,7 @@
 #define AUTHORITY "obtainAuthority"
 
 #define SERIES 5
+#define TIMEINTEGRAL 0.1
 
 using namespace std;
 using namespace cv;
@@ -307,6 +308,12 @@ Mat Formation::getInput()
 		Mat tarPosvel(pos + v);
 		tarPosvel.convertTo(tarPosvel, CV_32FC1);
 		ui += coefficients * (self.posVel - f.col(self.number - 1) - tarPosvel);
+		//add velocity test
+		ui.at<float>(0) *= TIMEINTEGRAL;
+		ui.at<float>(0) += self.posVel.at<float>(1);
+		ui.at<float>(1) *= TIMEINTEGRAL;
+		ui.at<float>(1) += self.posVel.at<float>(3);
+		//end
 		result.at<float>(0) = ui.at<float>(0) * (float)cos(yaw) + ui.at<float>(1) * (float)sin(yaw);
 		result.at<float>(1) = ui.at<float>(1) * (float)cos(yaw) - ui.at<float>(0) * (float)sin(yaw);
 		formationFigure << figure;
