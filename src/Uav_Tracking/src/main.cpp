@@ -181,6 +181,10 @@ int main(int argc, char **argv)
     ros::Subscriber sub = nh.subscribe("posvel_msg", 10, &Formation::packCallback, &formation);
     ros::Publisher pub = nh.advertise<uav_tracking::controldata>("controlData", 1);
     ros::Publisher ready = nh.advertise<std_msgs::Int8>("readyTogo", 2);
+
+    ros::Subscriber subDec = nh.subscribe("posvel_msg_dec", 2, &Formation::packDecCallback, &formation);
+    ros::Publisher xyDec = nh.advertise<uav_tracking::xyDectralize>("xyDec", 1);
+
     Detector target_finder(argc, argv);
     StapleTracker visual_tracker;
     Kalman motion_estimator;
@@ -356,6 +360,7 @@ int main(int argc, char **argv)
             formationInput[1] = tmp.at<float>(1);
             cout << "formation input " << formationInput[0] << " " << formationInput[1] << endl;
         }
+        formation.xyDecPub(xyDec);
         //trajectory generator
         //obstacle input removed temporarily
         //vector<float> obs_input = getAvoidanceInput();
