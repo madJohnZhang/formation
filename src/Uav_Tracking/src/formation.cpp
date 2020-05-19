@@ -16,6 +16,8 @@
 
 #include "uav_tracking/posvel.h"
 #include "uav_tracking/packs.h"
+#include "uav_tracking/packsDec.h"
+#include "uav_tracking/posvelDec.h"
 
 #define PI 3.14159265
 #define AUTHORITY "obtainAuthority"
@@ -196,7 +198,7 @@ void Formation::init()
 	//judge if all the agents in the network ready
 	int countAgent = 0;
 	int8_t tmpSynch = synch;
-	cout << "synch is:" << synch << endl;
+	cout << "synch is: " << synch << endl;
 	while (tmpSynch != 0)
 	{
 		tmpSynch &= tmpSynch - 1;
@@ -220,11 +222,11 @@ void Formation::init()
 void Formation::initD()
 {
 	Mat tmps(1, 3, CV_64FC1);
-	tmps.at<double>(0) = self.posvel.at<float>(0);
-	tmps.at<double>(1) = self.posvel.at<float>(2);
+	tmps.at<double>(0) = self.posVel.at<float>(0);
+	tmps.at<double>(1) = self.posVel.at<float>(2);
 	tmps.at<double>(2) = self.yaw;
-
-	posEDec.position(tmps, count);
+	Mat xys(formationNum, 2, CV_64FC1);
+	posEDec.position(tmps, xys, 1);
 	count++;
 }
 void Formation::initC()
@@ -264,7 +266,10 @@ void Formation::xyDecPub(ros::Publisher &xyDec)
 	if (decFlag)
 	{
 		Scalar tmp = posEDec.position();
-		xyDec.pub({tmp[0], tmp[2]});
+		uav_tracking::xyDectralize pubXY;
+		pubXY.x = tmp[0];
+		pubXY.y = tmp[2];
+		xyDec.publish(pubXY);
 	}
 }
 
@@ -295,7 +300,10 @@ Mat Formation::getInput()
 		Scalar v;
 		if (decFlag)
 		{
-			pos = posEDec.position(otherEstimate, count);
+			Scalar state(self.posVel.at<float>(0), self.posVel.at<float>(2), self.yaw);
+			Mat selfstate = Mat(1, 3, CV_64FC1, state);
+			cout << "selfstate" << selfstate << endl;
+			pos = posEDec.position(selfstate, otherEstimate, count);
 			v = posEDec.velocity();
 		}
 		else

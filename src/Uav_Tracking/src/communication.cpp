@@ -15,6 +15,9 @@
 #include "uav_tracking/controldata.h"
 #include "uav_tracking/packs.h"
 #include "std_msgs/Float32.h"
+#include "uav_tracking/packsDec.h"
+#include "uav_tracking/posvelDec.h"
+#include "uav_tracking/xyDectralize.h"
 
 using namespace std;
 using namespace cv;
@@ -85,7 +88,7 @@ public:
 
     void print();
 
-    void loop(ros::Publisher &pub);
+    void loop(ros::Publisher &pub, ros::Publisher &pubDec);
 
     void controlCallback(const uav_tracking::controldata &input);
     void controlTest();

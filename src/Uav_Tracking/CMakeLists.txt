@@ -39,6 +39,9 @@ add_message_files(
 	posvel.msg
 	controldata.msg
 	packs.msg
+	packsDec.msg
+	posvelDec.msg
+	xyDectralize.msg
 )
 #add_service_files(
 #  FILES

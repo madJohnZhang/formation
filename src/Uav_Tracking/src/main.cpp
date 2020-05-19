@@ -39,6 +39,9 @@
 #include "uav_tracking/posvel.h"
 #include "uav_tracking/packs.h"
 #include "uav_tracking/controldata.h"
+#include "uav_tracking/packsDec.h"
+#include "uav_tracking/posvelDec.h"
+#include "uav_tracking/xyDectralize.h"
 #include "formation.cpp"
 
 #define CONTROL
