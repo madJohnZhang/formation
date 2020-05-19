@@ -15,10 +15,97 @@ using namespace std;
  *TODO: 1. time interval for velocity estimate. A parameter
 
 */
+
+class posEstimateDec
+{
+private:
+    /* data */
+    Scalar grad;
+
+    Mat topo;
+    Mat IW;
+    Mat wtilder;
+
+    Scalar lastxy;
+
+    Scalar xy;
+    Mat xy_1;
+    Mat xy_2;
+
+    int num;
+
+public:
+    posEstimateDec();
+    posEstimateDec(int number, Mat &topology);
+
+    Mat gradient(Mat selfstate);
+
+    void setTopoNum(int number, Mat &topology);
+    Scalar position(Mat selfstate, Mat xys, int n);
+    Scalar position() { return xy; }
+    Scalar velocity() { return (xy - lastxy) / TIMEINTERVAL; }
+};
+posEstimateDec::posEstimateDec()
+{
+    xy = {0., 0., 0., 0.};
+}
+posEstimateDec::posEstimateDec(int number, Mat &topology)
+{
+    xy = {0., 0., 0., 0.};
+    num = number;
+    topo = topology.clone();
+    Mat I = Mat::eye(topology.size(), CV_64FC1);
+    IW = I + topo;
+    wtilder = IW / 2;
+}
+
+void posEstimateDec::setTopoNum(int number, Mat &topology)
+{
+    num = number;
+    topo = topology.clone();
+    Mat I = Mat::eye(topology.size(), CV_64FC1);
+    IW = I + topo;
+    wtilder = IW / 2;
+}
+
+Scalar posEstimateDec::gradient(Mat selfstate) //self state only
+{
+    Mat A = state.col(2);
+    Mat B = state.col(1) - state.col(0).mul(A);
+
+    double data[2];
+    data[0] = sum(2 * (A.mul(A) * xy[0] + A.mul(B) - A * xy[2]) / (A.mul(A) + 1))[0];
+    data[1] = sum(2 * (xy[2] - A * xy[0] - B) / (A.mul(A) + 1))[0];
+    return Scalar(data[0], 0, data[1], 0);
+}
+
+Scalar posEstimateDec::position(Mat selfstate, Mat xys, int n)
+{
+    Scalar gradNow = gradient(selfstate);
+    if (n > 1)
+    {
+        xy_2 = xy_1;
+
+        xys.row(num - 1) = xy;
+        xy_1 = xys;
+
+        lastxy = xy;
+        xy = IW.row(num - 1) * xy_1 - wtilder.row(number - 1) * xy_2 - ALPHA * (gradNow - grad);
+        grad = gradNow;
+    }
+    else
+    {
+        xys.row(num - 1) = xy;
+        xy_1 = xys;
+        xy = xy - ALPHA * gradNow;
+        grad = gradNow;
+    }
+    return xy;
+}
+
 class posEstimate
 {
 private:
-    Mat grad;
     Scalar xy;
     Scalar lastXy;
 

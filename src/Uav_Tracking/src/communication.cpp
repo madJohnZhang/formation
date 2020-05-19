@@ -34,11 +34,15 @@ private:
     int formationNum;
     int seq;
 
+    int decFlag;
+
     bool startControl;
 
     uav_tracking::posvel self;
+    uav_tracking::posvelDec selfDec;
     int synch;
     map<int, uav_tracking::posvel> others;
+    map<int, uav_tracking::posvelDec> othersDec;
 
     Mat coefficients;
     Mat topo;
@@ -51,6 +55,9 @@ private:
     double *caliGPS;
     uint8_t *dataIn;
     uint8_t *dataOut;
+
+    Scalar xy;
+
     vector<vector<double>> tmpInit;
 
     Vehicle *vehicle;
@@ -60,9 +67,10 @@ private:
 
 private:
     const static int sPACKAGESIZE = sizeof(uav_tracking::posvel);
+    const static int sDecPACKAGESIZE = sizeof(uav_tracking::posvelDec);
 
 public:
-    communicator();
+    communicator(char *argv);
     ~communicator();
     void initVehicle();
     void sendInfo();
@@ -82,6 +90,7 @@ public:
     void controlCallback(const uav_tracking::controldata &input);
     void controlTest();
     void readyCalback(const std_msgs::Int8 &ready);
+    void xyCallback(const uav_tracking::xyDectralize &input);
     float bound(const float &input);
     static int count;
 };
@@ -110,7 +119,7 @@ Vehicle *communicator::getVehicle()
     return vehicle;
 }
 
-communicator::communicator()
+communicator::communicator(char *argv)
 {
     linuxEnvironment = new LinuxSetup(1, NULL);
     vehicle = linuxEnvironment->getVehicle();
@@ -146,8 +155,25 @@ communicator::communicator()
 
     self.number = seq;
     synch = 0;
-    dataOut = new uint8_t[sPACKAGESIZE];
-    dataIn = new uint8_t[sPACKAGESIZE * (formationNum - 1)];
+    if (strcmp(argv, "dec") == 0)
+    {
+        decFlag = 1;
+    }
+    else
+    {
+        decFlag = 0;
+    }
+    if (decFlag)
+    {
+        dataOut = new uint8_t[sDecPACKAGESIZE];
+        dataIn = new uint8_t[sDecPACKAGESIZE * (formationNum - 1)];
+    }
+    else
+    {
+        dataOut = new uint8_t[sPACKAGESIZE];
+        dataIn = new uint8_t[sPACKAGESIZE * (formationNum - 1)];
+    }
+
     caliGPS = new double[2];
     for (int i = 0; i < SERIES; i++)
     {
@@ -168,6 +194,7 @@ communicator::communicator()
 
 communicator::~communicator()
 {
+    //dec
     delete linuxEnvironment;
     delete[] dataOut;
     delete[] dataIn;
@@ -212,30 +239,62 @@ void communicator::getSelf()
 //send info to other agent by XBEE
 void communicator::sendInfo()
 {
-    uav_tracking::posvel sendTmp = self;
-    sendTmp.number |= synch;
-    memcpy(dataOut, &sendTmp, sizeof(uav_tracking::posvel));
-    ser.write(dataOut, sPACKAGESIZE);
+    if (decFlag)
+    {
+        uav_tracking::posvelDec sendTmpDec = selfDec;
+        sendTmpDec.number |= synch;
+        memcpy(dataOut, &sendTmpDec, sDecPACKAGESIZE);
+        ser.write(dataOut, sDecPACKAGESIZE);
+    }
+    else
+    {
+        uav_tracking::posvel sendTmp = self;
+        sendTmp.number |= synch;
+        memcpy(dataOut, &sendTmp, sizeof(uav_tracking::posvel));
+        ser.write(dataOut, sPACKAGESIZE);
+    }
     cout << "infor sent" << endl;
 }
 
 void communicator::getInfoFromOthers()
 {
-    cout << "bytes read: " << ser.read(dataIn, sPACKAGESIZE * (formationNum - 1)) << '\n';
-
-    int number = 0;
-    uav_tracking::posvel tmp;
-    for (int i = 0; i < formationNum - 1; i++)
+    if (decFlag)
     {
-        memcpy(&tmp, dataIn + i * sPACKAGESIZE, sizeof(uav_tracking::posvel));
-        int otherSynch = (tmp.number & 0xFF00) >> 8;
-        tmp.number &= 0x00FF;
-        if (tmp.number >= 1 && tmp.number <= formationNum && tmp.x != 0 && tmp.y != 0)
+        cout << "bytes read: " << ser.read(dataIn, sDecPACKAGESIZE * (formationNum - 1)) << '\n';
+
+        int number = 0;
+        uav_tracking::posvelDec tmp;
+        for (int i = 0; i < formationNum - 1; i++)
         {
-            synch |= otherSynch;
-            others[tmp.number] = tmp;
+            memcpy(&tmp, dataIn + i * sDecPACKAGESIZE, sDecPACKAGESIZE);
+            int otherSynch = (tmp.number & 0xFF00) >> 8;
+            tmp.number &= 0x00FF;
+            if (tmp.number >= 1 && tmp.number <= formationNum && tmp.x != 0 && tmp.y != 0)
+            {
+                synch |= otherSynch;
+                othersDec[tmp.number] = tmp;
+            }
+            cout << "the yaw from " << tmp.number << "is " << tmp.x << " " << tmp.y << " " << tmp.yaw << endl;
         }
-        cout << "the yaw from " << tmp.number << "is " << tmp.x << " " << tmp.y << " " << tmp.yaw << endl;
+    }
+    else
+    {
+        cout << "bytes read: " << ser.read(dataIn, sPACKAGESIZE * (formationNum - 1)) << '\n';
+
+        int number = 0;
+        uav_tracking::posvel tmp;
+        for (int i = 0; i < formationNum - 1; i++)
+        {
+            memcpy(&tmp, dataIn + i * sPACKAGESIZE, sizeof(uav_tracking::posvel));
+            int otherSynch = (tmp.number & 0xFF00) >> 8;
+            tmp.number &= 0x00FF;
+            if (tmp.number >= 1 && tmp.number <= formationNum && tmp.x != 0 && tmp.y != 0)
+            {
+                synch |= otherSynch;
+                others[tmp.number] = tmp;
+            }
+            cout << "the yaw from " << tmp.number << "is " << tmp.x << " " << tmp.y << " " << tmp.yaw << endl;
+        }
     }
 }
 
@@ -272,6 +331,13 @@ float communicator::bound(const float &input)
         return input;
     }
 }
+
+void communicator::xyCallback(const uav_tracking::xyDectralize &input)
+{
+    selfDec.esX = input.x;
+    selfDec.esY = input.y;
+}
+
 void communicator::controlCallback(const uav_tracking::controldata &input)
 {
     if (startControl == false)
@@ -375,17 +441,32 @@ void communicator::cali(int calibration)
     }
 }
 
-void communicator::loop(ros::Publisher &pub)
+void communicator::loop(ros::Publisher &pub, ros::Publisher &pubDec)
 {
-    uav_tracking::packs tmp;
-    tmp.pack.push_back(self);
-    for (auto i : others)
+    if (decFlag)
     {
-        tmp.pack.push_back(i.second);
+        uav_tracking::packsDec tmp;
+        tmp.pack.push_back(selfDec);
+        for (auto i : othersDec)
+        {
+            tmp.pack.push_back(i.second);
+        }
+        tmp.yaw = yawAngle;
+        tmp.synch = synch;
+        pubDec.publish(tmp);
     }
-    tmp.yaw = yawAngle;
-    tmp.synch = synch;
-    pub.publish(tmp);
+    else
+    {
+        uav_tracking::packs tmp;
+        tmp.pack.push_back(self);
+        for (auto i : others)
+        {
+            tmp.pack.push_back(i.second);
+        }
+        tmp.yaw = yawAngle;
+        tmp.synch = synch;
+        pub.publish(tmp);
+    }
 }
 
 void communicator::print()
@@ -401,7 +482,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "com");
     ros::NodeHandle nh;
-    communicator com;
+    communicator com(argv[0]);
 
     int calibration = 1;
     cout << "please input the cali mode: not 0 for calibration completed; 0, do calibration" << endl;
@@ -411,8 +492,10 @@ int main(int argc, char **argv)
     getchar();
 
     ros::Publisher pub = nh.advertise<uav_tracking::packs>("posvel_msg", 2);
+    ros::Publisher pubDec = nh.advertise<uav_tracking::packsDec>("posvel_msg_dec", 2);
     ros::Subscriber sub = nh.subscribe("controlData", 1, &communicator::controlCallback, &com);
     ros::Subscriber subGo = nh.subscribe("readyTogo", 2, &communicator::readyCalback, &com);
+    ros::Subscriber subxy = nh.subscribe("xyDec", 1, &communicator::xyCallback, &com);
     ros::Rate loop_rate(15);
     int i = 0;
     /*com.initVehicle();
@@ -434,7 +517,7 @@ int main(int argc, char **argv)
             com.getSelf();
             com.sendInfo();
             com.getInfoFromOthers();
-            com.loop(pub);
+            com.loop(pub, pubDec);
             com.print();
         }
         i++;
