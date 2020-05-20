@@ -179,7 +179,6 @@ int main(int argc, char **argv)
 {
     init(argc, argv, "main");
     NodeHandle nh;
-
     Formation formation(1, argv);
     ros::Subscriber sub = nh.subscribe("posvel_msg", 10, &Formation::packCallback, &formation);
     ros::Publisher pub = nh.advertise<uav_tracking::controldata>("controlData", 1);

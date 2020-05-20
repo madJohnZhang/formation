@@ -64,6 +64,7 @@ void posEstimateDec::setTopoNum(int number, Mat &topology)
 {
     num = number;
     topo = topology.clone();
+    topo.convertTo(topo, CV_64FC1);
     Mat I = Mat::eye(topology.size(), CV_64FC1);
     IW = I + topo;
     wtilder = IW / 2;

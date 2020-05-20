@@ -159,8 +159,7 @@ Formation::Formation(int argc, char **argv)
 	f.convertTo(f, CV_32FC1);
 	fs.release();
 	caliGPS = new double[2];
-
-	if (strcmp(argv[0], "dec"))
+	if (!strcmp(argv[1], "dec"))
 	{
 		posEDec.setTopoNum(seq, topo);
 		decFlag = 1;
