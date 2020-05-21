@@ -230,13 +230,24 @@ void communicator::getSelf()
     Telemetry::GlobalPosition gp = vehicle->broadcast->getGlobalPosition();
     double posX = (gp.latitude - caliGPS[0]) * coeX;
     double posY = (gp.longitude - caliGPS[1]) * coeY;
-    self.x = (float)posX;
-    self.y = (float)posY;
-
     Telemetry::Vector3f v = vehicle->broadcast->getVelocity();
-    self.vx = v.x;
-    self.vy = v.y;
-    self.yaw = (float)tan(getYaw());
+    if (decFlag)
+    {
+        selfDec.x = (float)posX;
+        selfDec.y = (float)posY;
+        selfDec.vx = v.x;
+        selfDec.vy = v.y;
+        self.yaw = (float)tan(getYaw());
+    }
+    else
+    {
+        self.x = (float)posX;
+        self.y = (float)posY;
+
+        self.vx = v.x;
+        self.vy = v.y;
+        self.yaw = (float)tan(getYaw());
+    }
 }
 
 //send info to other agent by XBEE
@@ -485,7 +496,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "com");
     ros::NodeHandle nh;
-    communicator com(argv[0]);
+    communicator com(argv[1]);
 
     int calibration = 1;
     cout << "please input the cali mode: not 0 for calibration completed; 0, do calibration" << endl;
