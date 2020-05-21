@@ -245,14 +245,14 @@ void communicator::sendInfo()
     if (decFlag)
     {
         uav_tracking::posvelDec sendTmpDec = selfDec;
-        sendTmpDec.number |= synch;
+        sendTmpDec.number |= (synch << 8);
         memcpy(dataOut, &sendTmpDec, sDecPACKAGESIZE);
         ser.write(dataOut, sDecPACKAGESIZE);
     }
     else
     {
         uav_tracking::posvel sendTmp = self;
-        sendTmp.number |= synch;
+        sendTmp.number |= (synch << 8);
         memcpy(dataOut, &sendTmp, sizeof(uav_tracking::posvel));
         ser.write(dataOut, sPACKAGESIZE);
     }
