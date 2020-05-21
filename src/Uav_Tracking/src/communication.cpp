@@ -157,6 +157,7 @@ communicator::communicator(char *argv)
     fs.release();
 
     self.number = seq;
+    selfDec.number = seq;
     synch = 0;
     if (strcmp(argv, "dec") == 0)
     {
@@ -237,7 +238,7 @@ void communicator::getSelf()
         selfDec.y = (float)posY;
         selfDec.vx = v.x;
         selfDec.vy = v.y;
-        self.yaw = (float)tan(getYaw());
+        selfDec.yaw = (float)tan(getYaw());
     }
     else
     {
