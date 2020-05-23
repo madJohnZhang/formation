@@ -121,15 +121,15 @@ public:
 	{
 		pos.resize(3);
 		status.resize(6);
-		distance = 5.0; //init distance
+		distance = 2; //init distance
 		{
 			para_.fx = 520; //inner params
 			para_.fy = 520;
 			para_.tx = 320;
 			para_.ty = 240;
 			para_.ts = 0.02; //sampling time
-			para_.qk = 0.1;  //process noise var
-			para_.rk = 0.1;  //measure noise var
+			para_.qk = 0.1;	 //process noise var
+			para_.rk = 0.1;	 //measure noise var
 		}
 		rk = Mat::eye(3, 3, CV_32FC1) * para_.rk;
 		qk = Mat::eye(6, 6, CV_32FC1) * para_.qk;

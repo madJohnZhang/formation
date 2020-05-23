@@ -31,7 +31,7 @@ public:
 		pos[0] = team[0];
 		pos[1] = team[1];
 		
-		//pos[2] = -(current_pose[1] - y) / current_pose[2]; //vertical
+		pos[2] = -(current_pose[1] - y) / current_pose[2]; //vertical
 #ifdef SWITCH
 		if (current_pose[2] < z * 0.8 || current_pose[2] > z * 1.3)
 		{
