@@ -165,6 +165,7 @@ Formation::Formation(int argc, char **argv)
 		decFlag = 1;
 		dataOut = new uint8_t[sDECPACKAGESIZE];
 		dataIn = new uint8_t[sDECPACKAGESIZE * (formationNum - 1)];
+		otherEstimate.create(formationNum, 2, CV_64FC1);
 	}
 	else
 	{
