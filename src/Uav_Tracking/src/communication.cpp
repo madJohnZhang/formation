@@ -59,8 +59,6 @@ private:
     uint8_t *dataIn;
     uint8_t *dataOut;
 
-    Scalar xy;
-
     vector<vector<double>> tmpInit;
 
     Vehicle *vehicle;
@@ -486,11 +484,23 @@ void communicator::loop(ros::Publisher &pub, ros::Publisher &pubDec)
 
 void communicator::print()
 {
-    dataSelf << self.x << "," << self.vx << "," << self.y << "," << self.vy << "," << self.yaw << endl;
-    for (auto i : others)
+    if (!decFlag)
     {
-        dataXb << i.second.number << "," << i.second.x << "," << i.second.vx << "," << i.second.y << "," << i.second.vy << "," << i.second.yaw << endl;
-        cout << "xbee data is: " << i.second.number << "," << i.second.x << "," << i.second.vx << "," << i.second.y << "," << i.second.vy << "," << i.second.yaw << endl;
+        dataSelf << self.x << "," << self.vx << "," << self.y << "," << self.vy << "," << self.yaw << endl;
+        for (auto i : others)
+        {
+            dataXb << i.second.number << "," << i.second.x << "," << i.second.vx << "," << i.second.y << "," << i.second.vy << "," << i.second.yaw << endl;
+            cout << "xbee data is: " << i.second.number << "," << i.second.x << "," << i.second.vx << "," << i.second.y << "," << i.second.vy << "," << i.second.yaw << endl;
+        }
+    }
+    else
+    {
+        dataSelf << selfDec.x << "," << selfDec.vx << "," << selfDec.y << "," << selfDec.vy << "," << selfDec.yaw << endl;
+        for (auto i : othersDec)
+        {
+            dataXb << i.second.number << "," << i.second.x << "," << i.second.vx << "," << i.second.y << "," << i.second.vy << "," << i.second.yaw << endl;
+            cout << "xbee data is: " << i.second.number << "," << i.second.x << "," << i.second.vx << "," << i.second.y << "," << i.second.vy << "," << i.second.yaw << endl;
+        }
     }
 }
 int main(int argc, char **argv)

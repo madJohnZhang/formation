@@ -43,7 +43,11 @@ public:
     void setTopoNum(int number, Mat &topology);
     Scalar position(Mat selfstate, Mat xys, int n);
     Scalar position() { return xy; }
-    Scalar velocity() { return (xy - lastxy) / TIMEINTERVAL; }
+    Scalar velocity()
+    {
+        Scalar res = (xy - lastxy) / TIMEINTERVAL;
+        return Scalar(0, res[0], 0, res[2]);
+    }
 };
 posEstimateDec::posEstimateDec()
 {
@@ -94,12 +98,14 @@ Scalar posEstimateDec::position(Mat selfstate, Mat xys, int n)
         xy_1 = xys.clone();
 
         Scalar gradMinus = gradNow - grad;
-        gradMinus[1] = gradMinus[2];
-        gradMinus[2] = 0;
-        Mat minus(1, 2, CV_64FC1, gradMinus);
+        Mat minus(1, 2, CV_64FC1);
+        minus.at<double>(0) = gradMinus[0];
+        minus.at<double>(1) = gradMinus[2];
+        cout << "gradMinus" << gradMinus << endl;
+        cout << "minus" << minus << endl;
         Mat tmp = IW.row(num - 1) * xy_1 - wtilder.row(num - 1) * xy_2 - ALPHA * minus;
-        xy[0] = tmp.at<double>(0);
-        xy[2] = tmp.at<double>(1);
+        xy[0] += tmp.at<double>(0);
+        xy[2] += tmp.at<double>(1);
         grad = gradNow;
     }
     else

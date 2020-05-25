@@ -284,7 +284,6 @@ int main(int argc, char **argv)
     //main loop
     while (ros::ok())
     {
-
         loop_rate.sleep();
         ros::spinOnce();
         cap >> frame;

@@ -212,7 +212,15 @@ void Formation::init()
 	}
 	if (decFlag)
 	{
-		initD();
+		if (count == 0)
+		{
+			initD();
+		}
+		else
+		{
+			getInput();
+			count++;
+		}
 	}
 	else
 	{
@@ -227,7 +235,7 @@ void Formation::initD()
 	tmps.at<double>(2) = self.yaw;
 	Mat xys(formationNum, 2, CV_64FC1);
 	posEDec.position(tmps, xys, 1);
-	count++;
+	count = 2;
 }
 void Formation::initC()
 {
@@ -301,9 +309,10 @@ Mat Formation::getInput()
 		if (decFlag)
 		{
 			Scalar state(self.posVel.at<float>(0), self.posVel.at<float>(2), self.yaw);
-			Mat selfstate = Mat(1, 3, CV_64FC1, state);
+			cout << "state" << state << endl;
+			Mat selfstate(state);
 			cout << "selfstate" << selfstate << endl;
-			pos = posEDec.position(selfstate, otherEstimate, count);
+			pos = posEDec.position(selfstate.t(), otherEstimate, count);
 			v = posEDec.velocity();
 		}
 		else
