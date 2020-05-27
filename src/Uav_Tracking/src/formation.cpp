@@ -6,6 +6,7 @@
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <mutex>
+#include <queue>
 
 #include <djiosdk/dji_vehicle.hpp>
 #include <djiosdk/dji_broadcast.hpp>
@@ -46,10 +47,13 @@ private:
 	Mat coefficients;
 	Mat topo;
 	Mat f;
-	Mat otherEstimate;
 
 	posEstimate posE;
 	posEstimateDec posEDec;
+
+	vector<int> waitXYnum; //nodes number-1 saved
+	vector<queue<pair<double,double>>> qotherEstimate;
+	Mat xysDec;
 
 	float yaw;
 	double *caliGPS;
@@ -74,6 +78,7 @@ public:
 
 	void getStates(Mat &target);
 
+	bool isXYready();
 	Mat getInput();
 
 	void packCallback(const uav_tracking::packs &input);
@@ -134,10 +139,16 @@ void Formation::packDecCallback(const uav_tracking::packsDec &input)
 		}
 		else
 		{
-			otherEstimate.at<double>(i->number - 1, 0) = i->esX;
-			otherEstimate.at<double>(i->number - 1, 1) = i->esY;
+			if (i->synchXY)
+			{
+				pair<double, double> otherEstimatePair;
+				otherEstimatePair.first = i->esX;
+				otherEstimatePair.second = i->esY;
+				qotherEstimate[tmp.number - 1].push(otherEstimatePair);
+			}
+
 			others[tmp.number] = tmp;
-				}
+		}
 	}
 	if (others.size() == formationNum - 1)
 	{
@@ -165,7 +176,15 @@ Formation::Formation(int argc, char **argv)
 		decFlag = 1;
 		dataOut = new uint8_t[sDECPACKAGESIZE];
 		dataIn = new uint8_t[sDECPACKAGESIZE * (formationNum - 1)];
-		otherEstimate.create(formationNum, 2, CV_64FC1);
+		qotherEstimate.resize(formationNum);
+		xysDec = Mat::zeros(formationNum, 2, CV_64FC1);
+		for (int i = 1; i < formationNum; i++)
+		{
+			if (topo.at<float>(seq - 1, i) != 0)
+			{
+				waitXYnum.push_back(i);
+			}
+		}
 	}
 	else
 	{
@@ -269,6 +288,20 @@ void Formation::initC()
 	}
 }
 
+bool Formation::isXYready()
+{
+	bool isready = true;
+	for (auto i : waitXYnum)
+	{
+		if (qotherEstimate[i].empty())
+		{
+			isready = false;
+			break;
+		}
+	}
+	return isready;
+}
+
 void Formation::xyDecPub(ros::Publisher &xyDec)
 {
 	if (decFlag)
@@ -312,7 +345,22 @@ Mat Formation::getInput()
 			cout << "state" << state << endl;
 			Mat selfstate(state);
 			cout << "selfstate" << selfstate << endl;
-			pos = posEDec.position(selfstate.t(), otherEstimate, count);
+			if (isXYready())
+			{
+				for (auto index : waitXYnum)
+				{
+					pair<double, double> tmp = qotherEstimate[index].front();
+					qotherEstimate[index].pop();
+					xysDec.at<double>(index, 0) = tmp.first;
+					xysDec.at<double>(index, 1) = tmp.second;
+				}
+				pos = posEDec.position(selfstate.t(), xysDec, count);
+			}
+			else
+			{
+				pos = posEDec.position();
+			}
+
 			v = posEDec.velocity();
 		}
 		else

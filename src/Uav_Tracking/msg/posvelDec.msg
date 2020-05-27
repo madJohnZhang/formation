@@ -1,4 +1,6 @@
-int32 number
+int8 synchReady
+int8 synchXY
+int8 number
 float32 x
 float32 vx
 float32 y

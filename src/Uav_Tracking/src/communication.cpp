@@ -259,10 +259,10 @@ void communicator::sendInfo()
 {
     if (decFlag)
     {
-        uav_tracking::posvelDec sendTmpDec = selfDec;
-        sendTmpDec.number |= (synch << 8);
-        memcpy(dataOut, &sendTmpDec, sDecPACKAGESIZE);
+        selfDec.synchReady = synch;
+        memcpy(dataOut, &selfDec, sDecPACKAGESIZE);
         ser.write(dataOut, sDecPACKAGESIZE);
+        selfDec.synchXY = 0;
     }
     else
     {
@@ -285,11 +285,9 @@ void communicator::getInfoFromOthers()
         for (int i = 0; i < formationNum - 1; i++)
         {
             memcpy(&tmp, dataIn + i * sDecPACKAGESIZE, sDecPACKAGESIZE);
-            int otherSynch = (tmp.number & 0xFF00) >> 8;
-            tmp.number &= 0x00FF;
             if (tmp.number >= 1 && tmp.number <= formationNum && tmp.x != 0 && tmp.y != 0)
             {
-                synch |= otherSynch;
+                synch |= tmp.synchReady;
                 othersDec[tmp.number] = tmp;
             }
             cout << "the yaw from " << tmp.number << "is " << tmp.x << " " << tmp.y << " " << tmp.yaw << endl;
@@ -354,6 +352,7 @@ void communicator::xyCallback(const uav_tracking::xyDectralize &input)
 {
     selfDec.esX = input.x;
     selfDec.esY = input.y;
+    selfDec.synchXY = 1;
 }
 
 void communicator::controlCallback(const uav_tracking::controldata &input)
