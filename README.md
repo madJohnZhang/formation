@@ -64,11 +64,13 @@ z->positive (up), negative (down)
 #### 2020.03.18
 
 1. add the class of decentralized position esimation. extract the position estimation class as the parent class with the centralized and the decentralized inheriting publicly. 
+
 2. 
 
 #### 2020.05.11
 
 Plan for experiment
+
 1. buy two carts and backup XBees, install equipment of the third drone.
 2. fix the control para of yaw, add the height control.
 3. add the discrete integral of the horizontal control under formation of two agents(one in the air, one on the ground), since for now the drone is controlled by
@@ -80,3 +82,9 @@ velocity while the control logic is accelaration.
 #### 2020.05.15
 
 notes: create computation network.
+
+#### 2020.05.26
+
+Dilemma: dec pos est seems not to work, which is the value cannot converge or converge into a wrong position. My diagnose is that two values from two nodes are not in the same iteration, maybe a static gap, after lots of atempts. There are two assumed reasons: communication; the main process runs faster than the communication process and the same value can be calculated mltiple times.
+
+Solution: add a synchronized mechanism. Producer-consumer model. 0-1 good, produce queue (produce flag merged in number and synch signal), since one communication loop means a value comming (new or old). Design carefully in case of more bugs.

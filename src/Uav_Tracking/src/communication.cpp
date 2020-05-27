@@ -207,11 +207,11 @@ communicator::~communicator()
 
 void communicator::initVehicle()
 {
-    while (vehicle->broadcast->getRC().mode != 8000)
+    /*while (vehicle->broadcast->getRC().mode != 8000)
     {
         cout << "switch the mode to F mode. activate fail-------------" << endl;
         waitKey(500);
-    }
+    }*/
     ACK::ErrorCode ack = vehicle->obtainCtrlAuthority(1000);
     if (ACK::getError(ack))
     {
@@ -237,6 +237,11 @@ void communicator::getSelf()
         selfDec.vx = v.x;
         selfDec.vy = v.y;
         selfDec.yaw = (float)tan(getYaw());
+
+        //temporary
+        selfDec.x = (float)2.37295;
+        selfDec.y = (float)4.50968;
+        selfDec.yaw = (float)-7.14664;
     }
     else
     {

@@ -128,16 +128,16 @@ void Formation::packDecCallback(const uav_tracking::packsDec &input)
 		tmp.posVel.at<float>(1) = i->vx;
 		tmp.posVel.at<float>(2) = i->y;
 		tmp.posVel.at<float>(3) = i->vy;
-		otherEstimate.at<double>(i->number - 1, 0) = i->esX;
-		otherEstimate.at<double>(i->number - 1, 1) = i->esY;
 		if (tmp.number == seq)
 		{
 			self = tmp;
 		}
 		else
 		{
+			otherEstimate.at<double>(i->number - 1, 0) = i->esX;
+			otherEstimate.at<double>(i->number - 1, 1) = i->esY;
 			others[tmp.number] = tmp;
-		}
+				}
 	}
 	if (others.size() == formationNum - 1)
 	{
@@ -233,7 +233,7 @@ void Formation::initD()
 	tmps.at<double>(0) = self.posVel.at<float>(0);
 	tmps.at<double>(1) = self.posVel.at<float>(2);
 	tmps.at<double>(2) = self.yaw;
-	Mat xys(formationNum, 2, CV_64FC1);
+	Mat xys = Mat::zeros(formationNum, 2, CV_64FC1);
 	posEDec.position(tmps, xys, 1);
 	count = 2;
 }

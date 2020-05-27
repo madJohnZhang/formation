@@ -5,7 +5,7 @@
 #define ITERATION 20
 #define NODE 2
 #define ESTIMATEPARA 3 //pos x, pos y, yaw
-#define ALPHA 0.01
+#define ALPHA 0.5
 #define TIMEINTERVAL 1
 
 using namespace cv;
@@ -94,7 +94,8 @@ Scalar posEstimateDec::position(Mat selfstate, Mat xys, int n)
 
         xy_2 = xy_1.clone();
 
-        xys.row(num - 1) = Scalar(xy[0], xy[2]);
+        xys.row(num - 1).at<double>(0) = xy[0];
+        xys.row(num - 1).at<double>(1) = xy[2];
         xy_1 = xys.clone();
 
         Scalar gradMinus = gradNow - grad;
@@ -104,8 +105,8 @@ Scalar posEstimateDec::position(Mat selfstate, Mat xys, int n)
         cout << "gradMinus" << gradMinus << endl;
         cout << "minus" << minus << endl;
         Mat tmp = IW.row(num - 1) * xy_1 - wtilder.row(num - 1) * xy_2 - ALPHA * minus;
-        xy[0] += tmp.at<double>(0);
-        xy[2] += tmp.at<double>(1);
+        xy[0] = tmp.at<double>(0);
+        xy[2] = tmp.at<double>(1);
         grad = gradNow;
     }
     else
