@@ -36,6 +36,7 @@ private:
 	mutex mtxqueue;
 	int queuesize;
 	int decFlag;
+	bool newxy;
 
 	State self;
 	unordered_map<int, State> others;
@@ -52,7 +53,7 @@ private:
 	posEstimateDec posEDec;
 
 	vector<int> waitXYnum; //nodes number-1 saved
-	vector<queue<pair<double,double>>> qotherEstimate;
+	vector<queue<pair<double, double>>> qotherEstimate;
 	Mat xysDec;
 
 	float yaw;
@@ -178,6 +179,7 @@ Formation::Formation(int argc, char **argv)
 		dataIn = new uint8_t[sDECPACKAGESIZE * (formationNum - 1)];
 		qotherEstimate.resize(formationNum);
 		xysDec = Mat::zeros(formationNum, 2, CV_64FC1);
+		newxy = false;
 		for (int i = 1; i < formationNum; i++)
 		{
 			if (topo.at<float>(seq - 1, i) != 0)
@@ -255,6 +257,7 @@ void Formation::initD()
 	Mat xys = Mat::zeros(formationNum, 2, CV_64FC1);
 	posEDec.position(tmps, xys, 1);
 	count = 2;
+	newxy = true;
 }
 void Formation::initC()
 {
@@ -306,11 +309,15 @@ void Formation::xyDecPub(ros::Publisher &xyDec)
 {
 	if (decFlag)
 	{
-		Scalar tmp = posEDec.position();
-		uav_tracking::xyDectralize pubXY;
-		pubXY.x = tmp[0];
-		pubXY.y = tmp[2];
-		xyDec.publish(pubXY);
+		if (newxy)
+		{
+			Scalar tmp = posEDec.position();
+			uav_tracking::xyDectralize pubXY;
+			pubXY.x = tmp[0];
+			pubXY.y = tmp[2];
+			xyDec.publish(pubXY);
+			newxy = false;
+		}
 	}
 }
 
@@ -355,6 +362,7 @@ Mat Formation::getInput()
 					xysDec.at<double>(index, 1) = tmp.second;
 				}
 				pos = posEDec.position(selfstate.t(), xysDec, count);
+				newxy = true;
 			}
 			else
 			{
