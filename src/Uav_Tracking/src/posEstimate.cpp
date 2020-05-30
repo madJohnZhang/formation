@@ -105,8 +105,8 @@ Scalar posEstimateDec::position(Mat selfstate, Mat xys, int n)
         cout << "gradMinus" << gradMinus << endl;
         cout << "minus" << minus << endl;
         Mat tmp = IW.row(num - 1) * xy_1 - wtilder.row(num - 1) * xy_2 - ALPHA * minus;
-        xy[0] = tmp.at<double>(0);
-        xy[2] = tmp.at<double>(1);
+        xy[0] = 0.1 * lastxy[0] + 0.9 * tmp.at<double>(0);
+        xy[2] = 0.1 * lastxy[2] + 0.9 * tmp.at<double>(1);
         grad = gradNow;
     }
     else

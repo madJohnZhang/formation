@@ -52,7 +52,7 @@ private:
 	posEstimateDec posEDec;
 
 	vector<int> waitXYnum; //nodes number-1 saved
-	vector<queue<pair<double,double>>> qotherEstimate;
+	vector<queue<pair<double, double>>> qotherEstimate;
 	Mat xysDec;
 
 	float yaw;
@@ -145,6 +145,7 @@ void Formation::packDecCallback(const uav_tracking::packsDec &input)
 				otherEstimatePair.first = i->esX;
 				otherEstimatePair.second = i->esY;
 				qotherEstimate[tmp.number - 1].push(otherEstimatePair);
+				cout << "number is: " << qotherEstimate[tmp.number - 1].size() << "other pair" << otherEstimatePair.first << "," << otherEstimatePair.second << endl;
 			}
 
 			others[tmp.number] = tmp;
@@ -178,12 +179,16 @@ Formation::Formation(int argc, char **argv)
 		dataIn = new uint8_t[sDECPACKAGESIZE * (formationNum - 1)];
 		qotherEstimate.resize(formationNum);
 		xysDec = Mat::zeros(formationNum, 2, CV_64FC1);
-		for (int i = 1; i < formationNum; i++)
+		for (int i = 1; i <= formationNum; i++)
 		{
-			if (topo.at<float>(seq - 1, i) != 0)
+			if (i != seq && topo.at<float>(seq - 1, i - 1) != 0)
 			{
 				waitXYnum.push_back(i);
 			}
+		}
+		for (auto i : waitXYnum)
+		{
+			cout << "number is: " << i << ", " << endl;
 		}
 	}
 	else
@@ -246,6 +251,16 @@ void Formation::init()
 		initC();
 	}
 }
+
+template <class T>
+void clearQueue(queue<T> &value)
+{
+	while (!value.empty())
+	{
+		value.pop();
+	}
+}
+
 void Formation::initD()
 {
 	Mat tmps(1, 3, CV_64FC1);
@@ -255,6 +270,12 @@ void Formation::initD()
 	Mat xys = Mat::zeros(formationNum, 2, CV_64FC1);
 	posEDec.position(tmps, xys, 1);
 	count = 2;
+	for (int i = 0; i < qotherEstimate.size(); i++)
+	{
+		clearQueue(qotherEstimate[i]);
+	}
+	cout << "qotherestimate size()" << qotherEstimate[0].size() << endl;
+	cout << qotherEstimate[1].size() << endl;
 }
 void Formation::initC()
 {
@@ -293,7 +314,7 @@ bool Formation::isXYready()
 	bool isready = true;
 	for (auto i : waitXYnum)
 	{
-		if (qotherEstimate[i].empty())
+		if (qotherEstimate[i - 1].empty())
 		{
 			isready = false;
 			break;
@@ -349,10 +370,10 @@ Mat Formation::getInput()
 			{
 				for (auto index : waitXYnum)
 				{
-					pair<double, double> tmp = qotherEstimate[index].front();
-					qotherEstimate[index].pop();
-					xysDec.at<double>(index, 0) = tmp.first;
-					xysDec.at<double>(index, 1) = tmp.second;
+					pair<double, double> tmp = qotherEstimate[index - 1].front();
+					qotherEstimate[index - 1].pop();
+					xysDec.at<double>(index - 1, 0) = tmp.first;
+					xysDec.at<double>(index - 1, 1) = tmp.second;
 				}
 				pos = posEDec.position(selfstate.t(), xysDec, count);
 			}

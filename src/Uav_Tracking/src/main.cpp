@@ -177,6 +177,7 @@ void mouseCallback(int event, int x, int y, int flags, void *userdata)
 
 int main(int argc, char **argv)
 {
+    cout << "system time is: " << getSystemTime() << endl;
     init(argc, argv, "main");
     NodeHandle nh;
     Formation formation(1, argv);
