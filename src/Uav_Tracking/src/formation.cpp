@@ -36,7 +36,6 @@ private:
 	mutex mtxqueue;
 	int queuesize;
 	int decFlag;
-	bool newxy;
 
 	State self;
 	unordered_map<int, State> others;
@@ -52,7 +51,6 @@ private:
 	posEstimate posE;
 	posEstimateDec posEDec;
 
-	vector<int> waitXYnum; //nodes number-1 saved
 	vector<queue<pair<double, double>>> qotherEstimate;
 	Mat xysDec;
 
@@ -140,13 +138,10 @@ void Formation::packDecCallback(const uav_tracking::packsDec &input)
 		}
 		else
 		{
-			if (i->synchXY)
-			{
-				pair<double, double> otherEstimatePair;
-				otherEstimatePair.first = i->esX;
-				otherEstimatePair.second = i->esY;
-				qotherEstimate[tmp.number - 1].push(otherEstimatePair);
-			}
+			pair<double, double> otherEstimatePair;
+			otherEstimatePair.first = i->esX;
+			otherEstimatePair.second = i->esY;
+			qotherEstimate[tmp.number - 1].push(otherEstimatePair);
 
 			others[tmp.number] = tmp;
 		}
@@ -179,14 +174,6 @@ Formation::Formation(int argc, char **argv)
 		dataIn = new uint8_t[sDECPACKAGESIZE * (formationNum - 1)];
 		qotherEstimate.resize(formationNum);
 		xysDec = Mat::zeros(formationNum, 2, CV_64FC1);
-		newxy = false;
-		for (int i = 1; i <= formationNum; i++)
-		{
-			if (i != seq && topo.at<float>(seq - 1, i) != 0)
-			{
-				waitXYnum.push_back(i);
-			}
-		}
 	}
 	else
 	{
@@ -260,14 +247,18 @@ void clearQueue(queue<T> &value)
 
 void Formation::initD()
 {
-	Mat tmps(1, 3, CV_64FC1);
-	tmps.at<double>(0) = self.posVel.at<float>(0);
-	tmps.at<double>(1) = self.posVel.at<float>(2);
-	tmps.at<double>(2) = self.yaw;
-	Mat xys = Mat::zeros(formationNum, 2, CV_64FC1);
-	posEDec.position(tmps, xys, 1);
+	Mat statesTmp(formationNum, 3, CV_64FC1);
+	statesTmp.at<double>(seq - 1, 0) = self.posVel.at<float>(0);
+	statesTmp.at<double>(seq - 1, 1) = self.posVel.at<float>(2);
+	statesTmp.at<double>(seq - 1, 2) = self.yaw;
+	for (auto i : others)
+	{
+		statesTmp.at<double>(i.first - 1, 0) = i.second.posVel.at<float>(0);
+		statesTmp.at<double>(i.first - 1, 1) = i.second.posVel.at<float>(2);
+		statesTmp.at<double>(i.first - 1, 2) = i.second.yaw;
+	}
+	posEDec.position(statesTmp, xysDec, 1);
 	count = 2;
-	newxy = true;
 	for (int i = 0; i < qotherEstimate.size(); i++)
 	{
 		clearQueue(qotherEstimate[i]);
@@ -305,33 +296,15 @@ void Formation::initC()
 	}
 }
 
-bool Formation::isXYready()
-{
-	bool isready = true;
-	for (auto i : waitXYnum)
-	{
-		if (qotherEstimate[i - 1].empty())
-		{
-			isready = false;
-			break;
-		}
-	}
-	return isready;
-}
-
 void Formation::xyDecPub(ros::Publisher &xyDec)
 {
 	if (decFlag)
 	{
-		if (newxy)
-		{
-			Scalar tmp = posEDec.position();
-			uav_tracking::xyDectralize pubXY;
-			pubXY.x = tmp[0];
-			pubXY.y = tmp[2];
-			xyDec.publish(pubXY);
-			newxy = false;
-		}
+		Scalar tmp = posEDec.position();
+		uav_tracking::xyDectralize pubXY;
+		pubXY.x = tmp[0];
+		pubXY.y = tmp[2];
+		xyDec.publish(pubXY);
 	}
 }
 
@@ -362,27 +335,18 @@ Mat Formation::getInput()
 		Scalar v;
 		if (decFlag)
 		{
-			Scalar state(self.posVel.at<float>(0), self.posVel.at<float>(2), self.yaw);
-			cout << "state" << state << endl;
-			Mat selfstate(state);
-			cout << "selfstate" << selfstate << endl;
-			if (isXYready())
+			Mat statesTmp(formationNum, 3, CV_64FC1);
+			statesTmp.at<double>(seq - 1, 0) = self.posVel.at<float>(0);
+			statesTmp.at<double>(seq - 1, 1) = self.posVel.at<float>(2);
+			statesTmp.at<double>(seq - 1, 2) = self.yaw;
+			for (auto i : others)
 			{
-				for (auto index : waitXYnum)
-				{
-					pair<double, double> tmp = qotherEstimate[index - 1].front();
-					qotherEstimate[index - 1].pop();
-					xysDec.at<double>(index - 1, 0) = tmp.first;
-					xysDec.at<double>(index - 1, 1) = tmp.second;
-				}
-				pos = posEDec.position(selfstate.t(), xysDec, count);
-				newxy = true;
+				statesTmp.at<double>(i.first - 1, 0) = i.second.posVel.at<float>(0);
+				statesTmp.at<double>(i.first - 1, 1) = i.second.posVel.at<float>(2);
+				statesTmp.at<double>(i.first - 1, 2) = i.second.yaw;
 			}
-			else
-			{
-				pos = posEDec.position();
-			}
-
+			cout << "statesTmp: " << statesTmp << endl;
+			pos = posEDec.position(statesTmp, xysDec, count);
 			v = posEDec.velocity();
 		}
 		else

@@ -20,7 +20,7 @@ class posEstimateDec
 {
 private:
     /* data */
-    Scalar grad;
+    Mat grad;
 
     Mat topo;
     Mat IW;
@@ -38,7 +38,7 @@ public:
     posEstimateDec();
     posEstimateDec(int number, Mat &topology);
 
-    Scalar gradient(Mat selfstate);
+    Mat gradient(Mat states, Mat xys);
 
     void setTopoNum(int number, Mat &topology);
     Scalar position(Mat selfstate, Mat xys, int n);
@@ -63,7 +63,10 @@ posEstimateDec::posEstimateDec(int number, Mat &topology)
     IW = I + topo;
     wtilder = IW / 2;
 }
-
+/*
+@param number: the sequence number of this node
+@param topology: the topology of the network 
+*/
 void posEstimateDec::setTopoNum(int number, Mat &topology)
 {
     num = number;
@@ -73,48 +76,47 @@ void posEstimateDec::setTopoNum(int number, Mat &topology)
     IW = I + topo;
     wtilder = IW / 2;
 }
-
-Scalar posEstimateDec::gradient(Mat selfstate) //self state only
+/*
+@param states: the states of all the nodes
+@param xys: the xy of all the nodes
+*/
+Mat posEstimateDec::gradient(Mat states, Mat xys)
 {
-    Mat A = selfstate.col(2);
-    Mat B = selfstate.col(1) - selfstate.col(0).mul(A);
+    Mat A = states.col(2);
+    Mat B = states.col(1) - states.col(0).mul(A);
 
-    double data[2];
-    data[0] = sum(2 * (A.mul(A) * xy[0] + A.mul(B) - A * xy[2]) / (A.mul(A) + 1))[0];
-    data[1] = sum(2 * (xy[2] - A * xy[0] - B) / (A.mul(A) + 1))[0];
-    return Scalar(data[0], 0, data[1], 0);
+    Mat result = IW.clone();
+    result.col(0) = 2 * (A.mul(A).mul(xys.col(0)) + A.mul(B) - A.mul(xys.col(1))).mul(1 / (A.mul(A) + 1));
+    result.col(1) = 2 * (xys.col(1) - A.mul(xys.col(0)) - B).mul(1 / (A.mul(A) + 1));
+    return result;
 }
 //xy: (x,0,y,0)
-Scalar posEstimateDec::position(Mat selfstate, Mat xys, int n)
+/*
+@param states: positions and angles from the network nodes
+@param xys: computed xy of all the nodes
+@param n: iteration times
+*/
+Scalar posEstimateDec::position(Mat states, Mat xys, int n)
 {
-    Scalar gradNow = gradient(selfstate);
+    Mat gradNow = gradient(states, xys);
     if (n > 1)
     {
         lastxy = xy;
 
         xy_2 = xy_1.clone();
-
-        xys.row(num - 1).at<double>(0) = xy[0];
-        xys.row(num - 1).at<double>(1) = xy[2];
         xy_1 = xys.clone();
 
-        Scalar gradMinus = gradNow - grad;
-        Mat minus(1, 2, CV_64FC1);
-        minus.at<double>(0) = gradMinus[0];
-        minus.at<double>(1) = gradMinus[2];
-        cout << "gradMinus" << gradMinus << endl;
-        cout << "minus" << minus << endl;
-        Mat tmp = IW.row(num - 1) * xy_1 - wtilder.row(num - 1) * xy_2 - ALPHA * minus;
-        xy[0] = tmp.at<double>(0);
-        xy[2] = tmp.at<double>(1);
-        grad = gradNow;
+        xys = IW * xy_1 - wtilder * xy_2 - ALPHA * (gradNow - grad);
+        grad = gradNow.clone();
     }
     else
     {
         xy_1 = xys.clone();
-        xy = xy - ALPHA * gradNow;
-        grad = gradNow;
+        xys = topo * xys - ALPHA * gradNow;
+        grad = gradNow.clone();
     }
+    xy[0] = xys.at<double>(num - 1, 0);
+    xy[2] = xys.at<double>(num - 1, 1);
     return xy;
 }
 
