@@ -25,7 +25,6 @@ using namespace cv;
 #define PI 3.14159265
 #define AUTHORITY "obtainAuthority"
 #define SERIES 20
-#define NODE 3
 //to be confirmed:  is data in uav_tracking::posVel struct arraged by order.
 class communicator
 {
@@ -59,8 +58,6 @@ private:
     uint8_t *dataIn;
     uint8_t *dataOut;
 
-    vector<vector<double>> tmpInit;
-
     Vehicle *vehicle;
 
     fstream dataSelf;
@@ -71,7 +68,7 @@ private:
     const static int sDecPACKAGESIZE = sizeof(uav_tracking::posvelDec);
 
 public:
-    communicator(char *argv);
+    communicator(char **argv);
     ~communicator();
     void initVehicle();
     void sendInfo();
@@ -120,7 +117,7 @@ Vehicle *communicator::getVehicle()
     return vehicle;
 }
 
-communicator::communicator(char *argv)
+communicator::communicator(char **argv)
 {
     linuxEnvironment = new LinuxSetup(1, NULL);
     vehicle = linuxEnvironment->getVehicle();
@@ -130,7 +127,14 @@ communicator::communicator(char *argv)
         exit(-1);
     }
     startControl = false;
-    fs.open("formation.xml", FileStorage::READ);
+    if (strcmp(argv[2], "2") == 0)
+    {
+        fs.open("formation2.xml", FileStorage::READ);
+    }
+    else
+    {
+        fs.open("formation3.xml", FileStorage::READ);
+    }
     fs["formationNum"] >> formationNum;
     fs["seq"] >> seq;
     fs["topology"] >> topo;
@@ -157,7 +161,7 @@ communicator::communicator(char *argv)
     self.number = seq;
     selfDec.number = seq;
     synch = 0;
-    if (strcmp(argv, "dec") == 0)
+    if (strcmp(argv[1], "dec") == 0)
     {
         decFlag = 1;
     }
@@ -177,10 +181,6 @@ communicator::communicator(char *argv)
     }
 
     caliGPS = new double[2];
-    for (int i = 0; i < SERIES; i++)
-    {
-        tmpInit.push_back(vector<double>(3 * NODE, 0));
-    }
 
     //print data
     dataSelf = fstream("dataSelf.csv", ios::trunc | ios::out);
@@ -239,9 +239,9 @@ void communicator::getSelf()
         selfDec.yaw = (float)tan(getYaw());
 
         //temporary
-        selfDec.x = (float)2.37295;
-        selfDec.y = (float)4.50968;
-        selfDec.yaw = (float)-7.14664;
+        selfDec.x = (float)5;
+        selfDec.y = (float)6.1285;
+        selfDec.yaw = (float)3;
     }
     else
     {
@@ -251,6 +251,10 @@ void communicator::getSelf()
         self.vx = v.x;
         self.vy = v.y;
         self.yaw = (float)tan(getYaw());
+
+        self.x = (float)5;
+        self.y = (float)6.1285;
+        self.yaw = (float)3;
     }
 }
 
@@ -511,7 +515,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "com");
     ros::NodeHandle nh;
-    communicator com(argv[1]);
+    communicator com(argv);
 
     int calibration = 1;
     cout << "please input the cali mode: not 0 for calibration completed; 0, do calibration" << endl;

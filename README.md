@@ -88,3 +88,13 @@ notes: create computation network.
 Dilemma: dec pos est seems not to work, which is the value cannot converge or converge into a wrong position. My diagnose is that two values from two nodes are not in the same iteration, maybe a static gap, after lots of atempts. There are two assumed reasons: communication; the main process runs faster than the communication process and the same value can be calculated mltiple times.
 
 Solution: add a synchronized mechanism. Producer-consumer model. 0-1 good, produce queue (produce flag merged in number and synch signal), since one communication loop means a value comming (new or old). Design carefully in case of more bugs.
+
+
+#### 2020.06.03
+
+Test notes:
+1. create two setting profiles.
+2. there are coeffientes of the formation, formation shape, communication topology.
+3. add the communication topology of the formation inpute calculation $w_{ij}$.
+4. step size alpha: 0.1 for the centralized; 0.5 for the decentralized. its better to set a small size for the detcentralized, probably 0.2-0.4.
+5. practice before go out.

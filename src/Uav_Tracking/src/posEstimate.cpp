@@ -3,9 +3,8 @@
 #include <iostream>
 
 #define ITERATION 20
-#define NODE 2
 #define ESTIMATEPARA 3 //pos x, pos y, yaw
-#define ALPHA 0.5
+#define ALPHA 0.2
 #define TIMEINTERVAL 1
 
 using namespace cv;
@@ -33,6 +32,7 @@ private:
     Mat xy_2;
 
     int num;
+    int nodeNum;
 
 public:
     posEstimateDec();
@@ -70,6 +70,7 @@ posEstimateDec::posEstimateDec(int number, Mat &topology)
 void posEstimateDec::setTopoNum(int number, Mat &topology)
 {
     num = number;
+    nodeNum = topology.size().width;
     topo = topology.clone();
     topo.convertTo(topo, CV_64FC1);
     Mat I = Mat::eye(topology.size(), CV_64FC1);
@@ -85,7 +86,7 @@ Mat posEstimateDec::gradient(Mat states, Mat xys)
     Mat A = states.col(2);
     Mat B = states.col(1) - states.col(0).mul(A);
 
-    Mat result = IW.clone();
+    Mat result = Mat::zeros(IW.size().height, 2, CV_64FC1);
     result.col(0) = 2 * (A.mul(A).mul(xys.col(0)) + A.mul(B) - A.mul(xys.col(1))).mul(1 / (A.mul(A) + 1));
     result.col(1) = 2 * (xys.col(1) - A.mul(xys.col(0)) - B).mul(1 / (A.mul(A) + 1));
     return result;
@@ -125,6 +126,7 @@ class posEstimate
 private:
     Scalar xy;
     Scalar lastXy;
+    int nodeNum;
 
 public:
     posEstimate() {}
@@ -164,11 +166,11 @@ posEstimate::posEstimate(vector<vector<double>> initData, int series)
 void posEstimate::init(vector<vector<double>> initData, int series)
 {
     //data interval
-    int interval = NODE * ESTIMATEPARA;
+    nodeNum = initData[0].size() / ESTIMATEPARA;
     //output estimated xy
     xy = Scalar(2, 0);
     Scalar avg;
-    Mat piece(NODE, ESTIMATEPARA, CV_64FC1);
+    Mat piece(nodeNum, ESTIMATEPARA, CV_64FC1);
     for (int i = 0; i < ITERATION; i++)
     {
         for (int j = 0; j < series; j++)

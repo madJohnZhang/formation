@@ -155,7 +155,14 @@ void Formation::packDecCallback(const uav_tracking::packsDec &input)
 Formation::Formation(int argc, char **argv)
 {
 	queuesize = 0;
-	fs.open("formation.xml", FileStorage::READ);
+	if (strcmp(argv[2], "2") == 0)
+	{
+		fs.open("formation2.xml", FileStorage::READ);
+	}
+	else
+	{
+		fs.open("formation3.xml", FileStorage::READ);
+	}
 	fs["formationNum"] >> formationNum;
 	fs["seq"] >> seq;
 	fs["topology"] >> topo;
@@ -183,7 +190,7 @@ Formation::Formation(int argc, char **argv)
 
 		for (int i = 0; i < SERIES; i++)
 		{
-			tmpInit.push_back(vector<double>(3 * NODE, 0));
+			tmpInit.push_back(vector<double>(3 * formationNum, 0));
 		}
 	}
 
@@ -268,7 +275,7 @@ void Formation::initC()
 {
 
 	//size of data at one moment
-	vector<double> tmp(3 * NODE, 0.);
+	vector<double> tmp(3 * formationNum, 0.);
 	tmp[3 * (self.number - 1)] = self.posVel.at<double>(0);
 	tmp[3 * (self.number - 1) + 1] = self.posVel.at<double>(2);
 	tmp[3 * (self.number - 1) + 2] = self.yaw;
@@ -316,7 +323,7 @@ Mat Formation::getInput()
 {
 	Mat ui = Mat::zeros(2, 1, CV_32FC1);
 	Mat result = Mat::zeros(2, 1, CV_32FC1);
-	Mat target = Mat::zeros(NODE, 3, CV_64FC1);
+	Mat target = Mat::zeros(formationNum, 3, CV_64FC1);
 	Mat figure(1000, 1000, CV_8UC3, Scalar(255, 255, 255));
 	Scalar black(0, 0, 0);
 	Point x1(499, 0), x2(499, 999), y1(0, 499), y2(999, 499);
@@ -327,7 +334,7 @@ Mat Formation::getInput()
 	{
 		for (auto info : others)
 		{
-			ui += coefficients * ((self.posVel - f.col(self.number - 1)) - (info.second.posVel - f.col(info.second.number - 1)));
+			ui += topo.at<float>(seq - 1, info.first - 1) * coefficients * ((self.posVel - f.col(self.number - 1)) - (info.second.posVel - f.col(info.second.number - 1)));
 			circle(figure, {(int)info.second.posVel.at<float>(0) * 50 + 499, (int)info.second.posVel.at<float>(2) * 50 + 499}, 5, Scalar(0, 255, 0), 5);
 		}
 		circle(figure, {(int)self.posVel.at<float>(0) * 50 + 499, (int)self.posVel.at<float>(2) * 50 + 499}, 5, Scalar(255, 150, 0), 5);
@@ -360,7 +367,7 @@ Mat Formation::getInput()
 		cout << "got vel: " << v << endl;
 		Mat tarPosvel(pos + v);
 		tarPosvel.convertTo(tarPosvel, CV_32FC1);
-		ui += coefficients * (self.posVel - f.col(self.number - 1) - tarPosvel);
+		ui += topo.at<float>(seq - 1, seq - 1) * coefficients * (self.posVel - f.col(self.number - 1) - tarPosvel);
 		//add velocity test
 		ui.at<float>(0) *= TIMEINTEGRAL;
 		ui.at<float>(0) += self.posVel.at<float>(1);
