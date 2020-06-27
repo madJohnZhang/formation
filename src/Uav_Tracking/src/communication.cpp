@@ -239,9 +239,9 @@ void communicator::getSelf()
         selfDec.yaw = (float)tan(getYaw());
 
         //temporary
-        selfDec.x = (float)5;
-        selfDec.y = (float)6.1285;
-        selfDec.yaw = (float)3;
+        //selfDec.x = (float)5;
+        //selfDec.y = (float)6.1285;
+        //selfDec.yaw = (float)3;
     }
     else
     {
@@ -252,9 +252,9 @@ void communicator::getSelf()
         self.vy = v.y;
         self.yaw = (float)tan(getYaw());
 
-        self.x = (float)5;
-        self.y = (float)6.1285;
-        self.yaw = (float)3;
+        //self.x = (float)-3.08528;
+        //self.y = (float)4.177927;
+        //self.yaw = (float)-0.75005;
     }
 }
 

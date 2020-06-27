@@ -5,7 +5,7 @@
 #define ITERATION 20
 #define ESTIMATEPARA 3 //pos x, pos y, yaw
 #define ALPHA 0.2
-#define TIMEINTERVAL 1
+#define TIMEINTERVAL 0.4
 
 using namespace cv;
 using namespace std;

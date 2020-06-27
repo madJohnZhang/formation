@@ -54,6 +54,8 @@ private:
 	vector<queue<pair<double, double>>> qotherEstimate;
 	Mat xysDec;
 
+	fstream formationcsv;
+
 	float yaw;
 	double *caliGPS;
 	uint8_t *dataIn;
@@ -193,6 +195,7 @@ Formation::Formation(int argc, char **argv)
 			tmpInit.push_back(vector<double>(3 * formationNum, 0));
 		}
 	}
+	formationcsv.open("formation.csv", ios::trunc | ios::out);
 
 	formationFigure.open("/home/sustec/tracking/images/formation.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, Size(1000, 1000));
 }
@@ -336,8 +339,13 @@ Mat Formation::getInput()
 		{
 			ui += topo.at<float>(seq - 1, info.first - 1) * coefficients * ((self.posVel - f.col(self.number - 1)) - (info.second.posVel - f.col(info.second.number - 1)));
 			circle(figure, {(int)info.second.posVel.at<float>(0) * 50 + 499, (int)info.second.posVel.at<float>(2) * 50 + 499}, 5, Scalar(0, 255, 0), 5);
+			formationcsv << info.first << "," << info.second.posVel.at<float>(0) << "," << info.second.posVel.at<float>(1) << "," << info.second.posVel.at<float>(2)
+						 << "," << info.second.posVel.at<float>(3) << endl;
 		}
 		circle(figure, {(int)self.posVel.at<float>(0) * 50 + 499, (int)self.posVel.at<float>(2) * 50 + 499}, 5, Scalar(255, 150, 0), 5);
+		formationcsv << seq << "," << self.posVel.at<float>(0) << "," << self.posVel.at<float>(1) << "," << self.posVel.at<float>(2)
+					 << "," << self.posVel.at<float>(3) << endl;
+
 		Scalar pos;
 		Scalar v;
 		if (decFlag)
@@ -367,7 +375,10 @@ Mat Formation::getInput()
 		cout << "got vel: " << v << endl;
 		Mat tarPosvel(pos + v);
 		tarPosvel.convertTo(tarPosvel, CV_32FC1);
-		ui += topo.at<float>(seq - 1, seq - 1) * coefficients * (self.posVel - f.col(self.number - 1) - tarPosvel);
+		formationcsv << 0 << "," << tarPosvel.at<float>(0) << "," << tarPosvel.at<float>(1) << "," << tarPosvel.at<float>(2)
+					 << "," << tarPosvel.at<float>(3) << endl;
+
+		ui += topo.at<float>(seq - 1, seq - 1) * (coefficients * 1.15) * (self.posVel - f.col(self.number - 1) - tarPosvel);
 		//add velocity test
 		ui.at<float>(0) *= TIMEINTEGRAL;
 		ui.at<float>(0) += self.posVel.at<float>(1);

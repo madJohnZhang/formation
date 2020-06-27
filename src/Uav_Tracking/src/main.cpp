@@ -207,8 +207,8 @@ int main(int argc, char **argv)
     vector<int> bounding_box(4);
     Mat image;
     VideoCapture cap;
-    VideoWriter vwriter("/home/sustec/tracking/images/record.avi", CV_FOURCC('M', 'J', 'P', 'G'), 20, Size(640, 480));
-    VideoWriter vwriterTest("/home/sustec/tracking/recordT.avi", CV_FOURCC('M', 'J', 'P', 'G'), 20, Size(640, 480));
+    VideoWriter vwriter("/home/sustec3/tracking/images/record.avi", CV_FOURCC('M', 'J', 'P', 'G'), 20, Size(640, 480));
+    VideoWriter vwriterTest("/home/sustec3/tracking/recordT.avi", CV_FOURCC('M', 'J', 'P', 'G'), 20, Size(640, 480));
     //Mat frame;
     cap.open(0);
     if (!cap.isOpened())
