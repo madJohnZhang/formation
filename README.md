@@ -2,10 +2,10 @@
 ## System Overview
 The system is to let a number of UAVs with calibrated cameras track the selected target.
 
-![system work flow][https://github.com/madJohnZhang/formation/blob/master/img/flow.jpg]
+![system work flow](https://github.com/madJohnZhang/formation/blob/master/img/flow.jpg)
 System running process.
 
-![system structure][https://github.com/madJohnZhang/formation/blob/master/img/structure.jpg]
+![system structure](https://github.com/madJohnZhang/formation/blob/master/img/structure.jpg)
 System structure.
 
 ## Getting Started
