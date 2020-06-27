@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<opencv_storage>
+<formationNum>3</formationNum>
+<seq>3</seq>
+<port>/dev/xb</port>
+<baudrate>19200</baudrate>
+  <topology type_id="opencv-matrix">
+    <rows>3</rows>
+    <cols>3</cols>
+    <dt>f</dt>
+    <data>
+        0.3333 0.3333 0.3333
+        0.3333 0.6667 0
+        0.3333 0      0.6667</data>
+  </topology>
+<coefficients type_id="opencv-matrix">
+  <rows>2</rows>
+  <cols>4</cols>
+  <dt>f</dt>
+  <data>
+    -1. -1. 0. 0. 0. 0. -1. -1.</data></coefficients>
+<formation type_id="opencv-matrix">
+  <rows>4</rows>
+  <cols>3</cols>
+  <dt>f</dt>
+  <data>
+    4.5 4.5 -2
+    0   0    0
+    4.5 -4.5 5
+    0   0    0</data></formation>
+</opencv_storage>
